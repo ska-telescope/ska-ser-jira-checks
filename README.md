@@ -1,93 +1,186 @@
 # ska-ser-jira-checks
 
+ska-ser-jira-checks is a pytest suite
+that checks the housekeeping status of your Jira project.
 
+## Tests
 
-## Getting started
+### Test that every issue has been updated reasonably recently
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+This test fails if an issue has not been updated within a reasonable period of time.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+For items in the BACKLOG, the limit is 90 days.
+If an issue in the BACKLOG has not been updated in the last 90 days,
+it's time to reassess this issue, and ask if it is still worth doing.
+If so, add a comment that the issue has been reviewed and retained.
+Otherwise, discard it.
 
-## Add your files
+For "To Do" items, the limit is 30 days.
+If an issue exceeds the 30-day limit, ask whether this is still a task
+that is part of the team plan, and which the team intends to do imminently.
+If so, add a comment to that effect.
+Otherwise, push it back to the BACKLOG, or discard it.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+For items that are already in progress
+("In Progress", "Reviewing", "BLOCKED", or "READY FOR ACCEPTANCE),
+the limit is 30 days. Investigate why this issue has not progressed.
 
+### Test that issues have an assignee
+
+"BACKLOG" and "To Do" issues generally won't have an assignee,
+but issues that are
+"In Progress, "Reviewing", "READY FOR ACCEPTANCE", "Done", or "BLOCKED"
+should.
+
+### Test that no-one has too much work in progress (WIP)
+
+This test fails if more than 4 "In Progress" issues are assigned to the same person.
+
+### Test that no-one has too many BLOCKED issues
+
+This test fails if more than 2 "BLOCKED" issues are assigned to the same person.
+
+### Test that issues are assigned within the team
+
+This test checks that all issues (that are not already "Done")
+are assigned within the project team.
+
+This is a useful check for when a team member leaves:
+the test will fail if work remains assigned to that team member
+after the Jira project membership has been updated to remove them.
+
+**Note**: This test requires accessing a list of users
+that belong to the "Developer" role of the project being checked.
+This requires elevated permissions,
+generally only held by the Scrum Master / Agile Coach
+of the team that works on the project being checked.
+When run by a user who lacks these permissions (such as in the CI pipeline)
+this test is skipped.
+
+### Test that everyone in the team has a ticket in progress
+
+Test that everyone in the project team has a ticket "In Progress".
+
+(This test might not be appropriate to all teams. This is yet to be determined.)
+
+**Note**: This test requires accessing a list of users
+that belong to the "Developer" role of the project being checked.
+This requires elevated permissions,
+generally only held by the Scrum Master / Agile Coach
+of the team that works on the project being checked.
+When run by a user who lacks these permissions (such as in the CI pipeline)
+this test is skipped.
+
+### Test that issues have descriptions
+
+It's okay for a ticket in the BACKLOG to be lacking a description,
+but once a ticket has been promoted to "To Do" or beyond,
+a description should be required.
+
+### Test that all issues have fixVersions
+
+Issues in the BACKLOG need not be assigned to a PI (i.e. a fixVersion).
+But promoting a issue to "To Do" indicates an intent to work on it imminently,
+so 'To Do' issues should have a PI, as should issues that are 'In Progress' etc.
+
+Strictly speaking, "Done" issues should have an fixVersion too;
+but this test does not check 'Done' issues,
+because the past is the past.
+
+### Test that incomplete issues are assigned to the current or future PI
+
+It's okay for "Done" issues to have an old fixVersion,
+but other issues should link to a current or future fixVersion
+(or not be linked to a fixVersion at all).
+
+**TODO**: This test needs work: an issue can has multiple fixVersions.
+If an issue fixVersion contains a current or future PI,
+it shouldn't matter if it also contains an older PI.
+
+### Test that every issue is child of a feature or relates to an objective
+
+Within team projects, every issue should be
+either the "Child of" a feature, or "Relates to" an objective.
+
+### Test that no issues are child of an objective
+
+Sometimes issues are mis-linked to be "Child of" an objective.
+
+### Test that no issues relate to a feature
+
+Sometimes issues are mis-linked to "Relates to" a feature.
+
+### Test that no To Do or BACKLOG issues have commits
+
+If an issue has commits, work has already started on it,
+so it probably shouldn't be 'To Do' or 'Backlog'.
+
+### Test that all READY FOR ACCEPTANCE issues have outcomes
+
+Writing outcomes should be a pre-requisite to moving a ticket to RFA.
+
+### Test that no READY FOR ACCEPTANCE or Done issues have unmerged MRs
+
+Sometimes an issue is moved to READY FOR ACCEPTANCE or Done prematurely,
+while that are still unmerged MRs.
+
+While waiting for the MR to merge,
+move the issue back to "In Progress" or "Reviewing" or "Blocked".
+If the MR doesn't need to merge, close it.
+
+### Test that there are not too many READY FOR ACCEPTANCE issues
+
+If there are more than 9 READY FOR ACCEPTANCE issues,
+your Product Owner needs to be prodded to review and accept them.
+
+## Using this tool
+
+### From the CI pipeline
+
+The easiest way to use this tool is via its CI pipeline.
+
+1. Go to the [Run Pipeline](https://gitlab.com/ska-telescope/ska-ser-jira-checks/-/pipelines/new) page.
+
+2. Add a `JIRA_PROJECT` variable whose value is
+   the slug of the project that you want to check,
+   such as `MCCS`, `BANG`, `LOW`, etc.
+
+3. Click "Run pipeline", wait for it to run,
+   then examine the output of the `python-test` step.
+
+**Note**: If your project is well unkempt,
+and the list of failures dauntingly large,
+you can go back to step 2 and also add a `JIRA_START_DATE` key,
+with the value a date of the form `2024-09-11`
+and all issues created before that date will be disregarded.
+
+### Locally
+
+1. Clone this repo.
+
+2. Use `poetry install` to install into the environment of your choice.
+
+3. Set appropriate values for these three environment variables:
+   `JIRA_USERNAME`, `JIRA_PASSWORD` and `JIRA_PROJECT`.
+
+4. Run `pytest`
+
+**Note**: If you want to add your own tests to the test suite,
+that are specific to your project and should not be checked in,
+add them to a `test_custom.py` file.
+This filename is already gitignored.
+
+### Shortcut for users of the vscode remote container extension
+
+This project has a devcontainer definition,
+that loads environment variables from `.devcontainer/secrets.env`,
+which is gitignored.
+Create your own file of that name, with content like
+
+```text
+JIRA_USERNAME=my.username
+JIRA_PASSWORD=SekretPa$$w0rd
+JIRA_PROJECT=MYPROJ
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/ska-telescope/ska-ser-jira-checks.git
-git branch -M main
-git push -uf origin main
-```
 
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/ska-telescope/ska-ser-jira-checks/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+and those variables will be set whenever you launch your devcontainer.

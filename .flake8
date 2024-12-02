@@ -1,0 +1,8 @@
+[flake8]
+
+# E203, W503, D202 conflict with black
+ignore = E203,W503, D202
+
+docstring-style = sphinx
+rst-roles = py:attr, py:class, py:const, py:exc, py:func, py:meth, py:mod
+rst-directives = literalinclude, uml
