@@ -47,12 +47,27 @@ def fixture_session():
     Return an active Jira session.
 
     :return: an active Jira session.
+
+    :raises ValueError: if Jira auth environment variables are not available.
     """
-    username = os.environ["JIRA_USERNAME"]
-    password = os.environ["JIRA_PASSWORD"]
-    return jira.JIRA(
-        "https://jira.skatelescope.org",
-        basic_auth=(username, password),
+    token = os.environ.get("JIRA_API_TOKEN")
+    if token:
+        headers = jira.JIRA.DEFAULT_OPTIONS["headers"].copy()
+        headers["Authorization"] = f"Bearer {token}"
+        return jira.JIRA("https://jira.skatelescope.org", options={"headers": headers})
+
+    username = os.environ.get("JIRA_USERNAME")
+    password = os.environ.get("JIRA_PASSWORD")
+    if username and password:
+        return jira.JIRA(
+            "https://jira.skatelescope.org",
+            basic_auth=(username, password),
+        )
+
+    raise ValueError(
+        "Jira credentials not supplied: "
+        "set either JIRA_AUTH environment variable, "
+        "or both JIRA_USERNAME and JIRA_PASSWORD environment variables."
     )
 
 

@@ -28,20 +28,23 @@ def test_tickets_have_assignee(issues_by_status, status):
         pytest.fail(f"{unassigned[0]} is '{status}' and unassigned:\n{unassigned}")
 
 
-def test_noone_has_too_much_wip(in_progress_issues_by_assignee):
+@pytest.mark.parametrize("max_wip", [4])
+def test_noone_has_too_much_wip(in_progress_issues_by_assignee, max_wip):
     """
     Test that no-one has too many "In Progress" issues assigned to them.
 
     :param in_progress_issues_by_assignee: dictionary of "In Progress" issues,
         keyed by the assignee.
+    :param max_wip: the maximum permitted number of In Progress issues.
     """
     overwip = {}
     for member, issues in in_progress_issues_by_assignee.items():
-        if len(issues) > 4:
+        if len(issues) > max_wip:
             overwip[member] = [issue.key for issue in issues]
     if len(overwip) > 1:
         pytest.fail(
-            f"{len(overwip)} team members have more than 3 tickets In Progress:\n"
+            f"{len(overwip)} team members have more than "
+            f"{max_wip} tickets In Progress:\n"
             f"{pprint.pformat(overwip)}"
         )
     elif len(overwip) == 1:
@@ -51,22 +54,23 @@ def test_noone_has_too_much_wip(in_progress_issues_by_assignee):
         )
 
 
-def test_noone_has_too_much_blocked(blocked_issues_by_assignee):
+@pytest.mark.parametrize("max_blocked", [2])
+def test_noone_has_too_much_blocked(blocked_issues_by_assignee, max_blocked):
     """
     Test that no-one has too many "Blocked" issues assigned to them.
 
     :param blocked_issues_by_assignee: dictionary of "BLOCKED" issues,
         keyed by the assignee
+    :param max_blocked: the maximum permitted number of BLOCKED issues.
     """
-    LIMIT = 2  # pylint: disable=invalid-name
-
     blocked = {}
     for member, issues in blocked_issues_by_assignee.items():
         if len(issues) > 1:
             blocked[member] = [issue.key for issue in issues]
-    if len(blocked) > LIMIT:
+    if len(blocked) > max_blocked:
         pytest.fail(
-            f"{len(blocked)} team members have more than {LIMIT} tickets BLOCKED:\n"
+            f"{len(blocked)} team members have more than "
+            f"{max_blocked} tickets BLOCKED:\n"
             f"{pprint.pformat(blocked)}"
         )
     elif len(blocked) == 1:

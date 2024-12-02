@@ -87,17 +87,17 @@ def test_no_rfa_or_done_issues_have_open_merge_requests(issues_by_status, status
             pytest.fail(f"{assignee}; {issues[0]} is '{status}' with unmerged commits.")
 
 
-def test_not_too_many_rfa_issues(rfa_issues):
+@pytest.mark.parametrize("max_rfa", [9])
+def test_not_too_many_rfa_issues(rfa_issues, max_rfa):
     """
     Test that there are not too many READY FOR ACCEPTANCE issues.
 
     Too many RFA issues means the PO has fallen behind on moving these to Done.
 
     :param rfa_issues: list of RFA issues
+    :param max_rfa: the maximum permitted number of READY FOR ACCEPTANCE issues.
     """
-    RFA_LIMIT = 9  # pylint: disable=invalid-name
-
-    if len(rfa_issues) > RFA_LIMIT:
+    if len(rfa_issues) > max_rfa:
         rfas_by_assignee = defaultdict(list)
         for issue in rfa_issues:
             name = issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
