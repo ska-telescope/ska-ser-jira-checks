@@ -122,7 +122,7 @@ def test_everyone_has_a_ticket_in_progress(in_progress_issues_by_assignee, team)
     if len(unassigned_members) > 1:
         pytest.fail(
             f"{len(unassigned_members)} team members don't have a ticket In Progress:\n"
-            f"{unassigned_members}"
+            f"{pprint.pformat(unassigned_members)}"
         )
     elif len(unassigned_members) == 1:
-        pytest.fail(f"{unassigned_members[0]} doesn't have a ticket In Progress.")
+        pytest.fail(f"{unassigned_members.pop()} doesn't have a ticket In Progress.")
