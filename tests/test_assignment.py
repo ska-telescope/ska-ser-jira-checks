@@ -7,7 +7,15 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "status", ["In Progress", "Reviewing", "READY FOR ACCEPTANCE", "Done", "BLOCKED"]
+    "status",
+    [
+        "In Progress",
+        "Reviewing",
+        "Merge Request",
+        "READY FOR ACCEPTANCE",
+        "Done",
+        "BLOCKED",
+    ],
 )
 def test_tickets_have_assignee(issues_by_status, status):
     """
@@ -82,7 +90,15 @@ def test_noone_has_too_much_blocked(blocked_issues_by_assignee, max_blocked):
 
 @pytest.mark.parametrize(
     "status",
-    ["BACKLOG", "To Do", "BLOCKED", "In Progress", "Reviewing", "READY FOR ACCEPTANCE"],
+    [
+        "BACKLOG",
+        "To Do",
+        "BLOCKED",
+        "In Progress",
+        "Reviewing",
+        "Merge Request",
+        "READY FOR ACCEPTANCE",
+    ],
 )
 def test_tickets_are_assigned_within_team(team, issues_by_status, status):
     """

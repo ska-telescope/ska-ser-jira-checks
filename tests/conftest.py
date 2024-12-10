@@ -107,7 +107,8 @@ def fixture_statuses():
         "Done",
         "In Progress",
         "READY FOR ACCEPTANCE",
-        "Reviewing",
+        "Reviewing",  # JANUS and THORN
+        "Merge Request",  # WOMBAT
         "To Do",
     ]
 

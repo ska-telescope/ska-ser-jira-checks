@@ -14,6 +14,7 @@ import pytest
         ("To Do", 30),
         ("In Progress", 30),
         ("Reviewing", 30),
+        ("Merge Request", 30),
         ("BLOCKED", 30),
         ("READY FOR ACCEPTANCE", 30),
     ],

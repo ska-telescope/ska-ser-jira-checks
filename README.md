@@ -22,14 +22,14 @@ If so, add a comment to that effect.
 Otherwise, push it back to the BACKLOG, or discard it.
 
 For items that are already in progress
-("In Progress", "Reviewing", "BLOCKED", or "READY FOR ACCEPTANCE),
+("In Progress", "Reviewing", "Merge Request", "BLOCKED", or "READY FOR ACCEPTANCE),
 the limit is 30 days. Investigate why this issue has not progressed.
 
 ### Test that issues have an assignee
 
 "BACKLOG" and "To Do" issues generally won't have an assignee,
 but issues that are
-"In Progress, "Reviewing", "READY FOR ACCEPTANCE", "Done", or "BLOCKED"
+"In Progress, "Reviewing", "Merge Request", "READY FOR ACCEPTANCE", "Done", or "BLOCKED"
 should.
 
 ### Test that no-one has too much work in progress (WIP)
@@ -125,7 +125,7 @@ Sometimes an issue is moved to READY FOR ACCEPTANCE or Done prematurely,
 while that are still unmerged MRs.
 
 While waiting for the MR to merge,
-move the issue back to "In Progress" or "Reviewing" or "Blocked".
+move the issue back to "In Progress" / "Reviewing" / "Merge Request" / "Blocked".
 If the MR doesn't need to merge, close it.
 
 ### Test that there are not too many READY FOR ACCEPTANCE issues
