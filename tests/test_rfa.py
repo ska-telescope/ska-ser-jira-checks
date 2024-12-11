@@ -46,6 +46,51 @@ def test_rfa_issues_have_outcomes(rfa_issues):
             )
 
 
+@pytest.mark.parametrize("status", ["Reviewing", "Merge Request"])
+def test_reviewing_issues_have_open_merge_requests(issues_by_status, status):
+    """
+    Test that Reviewing or Merge Request issues have unmerged MRs.
+
+    If they don't, then they should be moved through to READY FOR ACCEPTANCE.
+
+    :param issues_by_status: dictionary of issues, keyed by their status.
+    :param status: the issue status under consideration.
+    """
+    issues_with_no_open_mrs = defaultdict(list)
+    count = 0
+
+    for issue in issues_by_status[status]:
+        raw_dev_field = issue.fields.customfield_13300
+
+        index = raw_dev_field.find("devSummaryJson=")
+        json_bit = raw_dev_field[index + len("devSummaryJson=") : -1]
+        dev_field = json.loads(json_bit)
+
+        if not dev_field["cachedValue"]["summary"]["pullrequest"]["overall"]["details"][
+            "openCount"
+        ]:
+            name = issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
+            issues_with_no_open_mrs[name].append(issue.key)
+            count += 1
+
+    if len(issues_with_no_open_mrs) > 1:
+        pytest.fail(
+            f"{count} '{status}' issues have no unmerged commits:\n"
+            f"{pprint.pformat(dict(issues_with_no_open_mrs))}"
+        )
+    elif len(issues_with_no_open_mrs) == 1:
+        assignee, issues = issues_with_no_open_mrs.popitem()
+        if len(issues) > 1:
+            pytest.fail(
+                f"{assignee} has {count} '{status}' issues with no unmerged commits:\n"
+                f"{pprint.pformat(issues)}"
+            )
+        else:
+            pytest.fail(
+                f"{assignee}; {issues[0]} is '{status}' with no unmerged commits."
+            )
+
+
 @pytest.mark.parametrize("status", ["READY FOR ACCEPTANCE", "Done"])
 def test_no_rfa_or_done_issues_have_open_merge_requests(issues_by_status, status):
     """
