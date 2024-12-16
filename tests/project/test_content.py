@@ -9,8 +9,8 @@ import pytest
 @pytest.mark.parametrize(
     "status",
     [
-        "In Progress",
         "To Do",
+        "In Progress",
         "BLOCKED",
         "Reviewing",
         "Merge Request",
@@ -54,7 +54,14 @@ def test_issues_have_description(issues_by_status, status):
 
 @pytest.mark.parametrize(
     "status",
-    ["In Progress", "BLOCKED", "Reviewing", "Merge Request", "READY FOR ACCEPTANCE"],
+    [
+        "To Do",
+        "In Progress",
+        "BLOCKED",
+        "Reviewing",
+        "Merge Request",
+        "READY FOR ACCEPTANCE",
+    ],
 )
 def test_issues_have_a_fix_version(issues_by_status, status):
     """

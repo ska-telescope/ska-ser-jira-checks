@@ -9,7 +9,14 @@ import pytest
 
 @pytest.mark.parametrize(
     "status",
-    ["In Progress", "BLOCKED", "Reviewing", "Merge Request", "READY FOR ACCEPTANCE"],
+    [
+        "To Do",
+        "In Progress",
+        "BLOCKED",
+        "Reviewing",
+        "Merge Request",
+        "READY FOR ACCEPTANCE",
+    ],
 )
 def test_issues_are_child_of_a_feature_or_relate_to_an_objective(
     issues_by_status, status

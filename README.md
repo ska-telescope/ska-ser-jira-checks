@@ -128,10 +128,35 @@ While waiting for the MR to merge,
 move the issue back to "In Progress" / "Reviewing" / "Merge Request" / "Blocked".
 If the MR doesn't need to merge, close it.
 
+### Test that Reviewing issues have unmerged MRs
+
+Some teams have a "Reviewing" or "Merge Review" status in their Jira workflows.
+
+This status usually implies that a merge request is under review.
+If there are no unmerged MRs linked to the ticket, then most likely the
+review is complete, and the MR has been merged or closed,
+and so the issue needs to be moved to READY FOR ACCEPTANCE.
+
+This test checks that issues with this status are linked to an unmerged MR.
+It will produce a false positive if a ticket is in "Reviewing" / "Merge request"
+while some other artefact, such as a Confluence page, is under review.
+
 ### Test that there are not too many READY FOR ACCEPTANCE issues
 
 If there are more than 9 READY FOR ACCEPTANCE issues,
 your Product Owner needs to be prodded to review and accept them.
+
+### Test that SKBs assigned within the team are not too old
+
+Deadlines are set quite aggressively for SKBs, to encourage prompt action.
+
+**Note**: This test requires accessing a list of users
+that belong to the "Developer" role of the project being checked.
+This requires elevated permissions,
+generally only held by the Scrum Master / Agile Coach
+of the team that works on the project being checked.
+When run by a user who lacks these permissions (such as in the CI pipeline)
+this test is skipped.
 
 ## Using this tool
 
