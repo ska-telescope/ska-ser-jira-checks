@@ -7,6 +7,17 @@ from collections import defaultdict
 import pytest
 
 
+@pytest.fixture(name="unlinked_labels")
+def fixture_unlinked_labels() -> set:
+    """
+    Return a  set of labels that indicate that an issue is deliberately not linked.
+
+    :return: a  set of lower-case string labels
+        that indicate that an issue is deliberately not linked.
+    """
+    return {"innovation", "overhead", "team_backlog"}
+
+
 @pytest.mark.parametrize(
     "status",
     [
@@ -19,7 +30,7 @@ import pytest
     ],
 )
 def test_issues_are_child_of_a_feature_or_relate_to_an_objective(
-    issues_by_status, status
+    unlinked_labels, issues_by_status, status
 ):
     """
     Test that every issue is appropriately linked.
@@ -27,12 +38,22 @@ def test_issues_are_child_of_a_feature_or_relate_to_an_objective(
     Every issue should be either the "Child of" a feature,
     or "Relates to" an objective.
 
+    Exceptions are made for tickets with one of the following labels:
+    "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
+
+    :param unlinked_labels: set of lower-case labels
+        that indicate that an issue is deliberately not linked
+        to a feature or objective, and therefore should be ignored by this test.
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
     """
     count = 0
     unlinked_issues = defaultdict(list)
     for issue in issues_by_status[status]:
+        lower_labels = set(label.lower() for label in issue.fields.labels)
+        if lower_labels.intersection(unlinked_labels):
+            continue
+
         for issuelink in issue.fields.issuelinks:
             if (
                 issuelink.type.name == "Parent/Child"
