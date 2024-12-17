@@ -99,8 +99,13 @@ it shouldn't matter if it also contains an older PI.
 
 ### Test that every issue is child of a feature or relates to an objective
 
-Within team projects, every issue should be
+Within team projects, issues should generally be
 either the "Child of" a feature, or "Relates to" an objective.
+
+There are exceptions; for example team backlog work, innovation,
+and SAFe overhead work.
+An issue can be labelled as an exception that should be ignored by this test,
+by adding one of the following labels: "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
 
 ### Test that no issues are child of an objective
 

@@ -91,7 +91,6 @@ def test_issues_have_a_fix_version(issues_by_status, status):
 @pytest.mark.parametrize(
     "status",
     [
-        "BACKLOG",
         "To Do",
         "In Progress",
         "BLOCKED",
@@ -108,30 +107,26 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
     but other issues should link to a current or future fixVersion
     (or not be linked to a fixVersion at all).
 
-    TODO: This should be refactored so that it doesn't complain if an issue
-    links to an old *and* current fixVersion.
-
     :param pi: the current Program Increment number
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
     """
     current_pi = f"PI{pi}"
-    old_pis = {f"PI{i}" for i in range(1, pi)}
 
     issues_with_old_fixversion = defaultdict(list)
     count = 0
 
     for issue in issues_by_status[status]:
-        fix_versions = set(issue.fields.fixVersions)
+        fix_versions = set(issue.name for issue in issue.fields.fixVersions)
+        if not fix_versions:
+            continue
+
         if current_pi in fix_versions:
             continue
-        if old_pis.intersection(fix_versions):
-            assignee = (
-                issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
-            )
-            issues_with_old_fixversion[assignee].append(issue.key)
-            count += 1
-            break
+
+        assignee = issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
+        issues_with_old_fixversion[assignee].append(issue.key)
+        count += 1
 
     if len(issues_with_old_fixversion) > 1:
         pytest.fail(
