@@ -7,6 +7,7 @@ variables:
 stages:
   - lint
   - test
+  - scan
 
 # Include CI templates 
 include:
