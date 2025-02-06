@@ -47,7 +47,7 @@ def fixture_team_skbs(skbs, team):
             if skb.fields.assignee.name in team:
                 team_skbs.append(skb)
         elif skb.fields.creator.name in team:
-            team.skbs.append(skb)
+            team_skbs.append(skb)
     return team_skbs
 
 

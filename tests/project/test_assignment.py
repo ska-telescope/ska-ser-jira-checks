@@ -73,9 +73,9 @@ def test_noone_has_too_much_blocked(blocked_issues_by_assignee, max_blocked):
     """
     blocked = {}
     for member, issues in blocked_issues_by_assignee.items():
-        if len(issues) > 1:
+        if len(issues) > max_blocked:
             blocked[member] = [issue.key for issue in issues]
-    if len(blocked) > max_blocked:
+    if len(blocked) > 1:
         pytest.fail(
             f"{len(blocked)} team members have more than "
             f"{max_blocked} tickets BLOCKED:\n"
