@@ -19,7 +19,7 @@ import pytest
         "READY FOR ACCEPTANCE",
         "Done",
     ],
-)  # pylint: disable-next=too-many-locals,
+)  # pylint: disable-next=too-many-locals, too-many-branches
 def test_issues_in_this_pi_link_to_feature_or_objective_in_this_pi(
     pi, session, unlinked_labels, issues_by_status, status
 ):
@@ -57,6 +57,10 @@ def test_issues_in_this_pi_link_to_feature_or_objective_in_this_pi(
         lower_labels = set(label.lower() for label in issue.fields.labels)
         if lower_labels.intersection(unlinked_labels):
             continue
+
+        epic = issue.fields.customfield_10006
+        if epic is not None and is_in_this_pi(epic):
+            break
 
         for issuelink in issue.fields.issuelinks:
             if (
