@@ -1,21 +1,11 @@
 """Test issue links."""
 
+import functools
 import json
 import pprint
 from collections import defaultdict
 
 import pytest
-
-
-@pytest.fixture(name="unlinked_labels")
-def fixture_unlinked_labels() -> set:
-    """
-    Return a  set of labels that indicate that an issue is deliberately not linked.
-
-    :return: a  set of lower-case string labels
-        that indicate that an issue is deliberately not linked.
-    """
-    return {"innovation", "overhead", "team_backlog"}
 
 
 @pytest.mark.parametrize(
@@ -27,10 +17,11 @@ def fixture_unlinked_labels() -> set:
         "Reviewing",
         "Merge Request",
         "READY FOR ACCEPTANCE",
+        "Done",
     ],
-)
-def test_issues_are_child_of_a_feature_or_relate_to_an_objective(
-    unlinked_labels, issues_by_status, status
+)  # pylint: disable-next=too-many-locals, too-many-branches
+def test_issues_in_this_pi_link_to_feature_or_objective_in_this_pi(
+    pi, session, unlinked_labels, issues_by_status, status
 ):
     """
     Test that every issue is appropriately linked.
@@ -41,35 +32,57 @@ def test_issues_are_child_of_a_feature_or_relate_to_an_objective(
     Exceptions are made for tickets with one of the following labels:
     "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
 
+    :param pi: the current Program Increment number
+    :param session: an active Jira session.
     :param unlinked_labels: set of lower-case labels
         that indicate that an issue is deliberately not linked
         to a feature or objective, and therefore should be ignored by this test.
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
     """
+
+    @functools.lru_cache
+    def is_in_this_pi(issue_key):
+        issue = session.issue(issue_key)
+        fix_versions = set(issue.name for issue in issue.fields.fixVersions)
+        return f"PI{pi}" in fix_versions
+
+    current_pi = f"PI{pi}"
     count = 0
     unlinked_issues = defaultdict(list)
     for issue in issues_by_status[status]:
+        fix_versions = set(issue.name for issue in issue.fields.fixVersions)
+        if current_pi not in fix_versions:
+            continue
         lower_labels = set(label.lower() for label in issue.fields.labels)
         if lower_labels.intersection(unlinked_labels):
             continue
+
+        epic = issue.fields.customfield_10006
+        if epic is not None and is_in_this_pi(epic):
+            break
 
         for issuelink in issue.fields.issuelinks:
             if (
                 issuelink.type.name == "Parent/Child"
                 and hasattr(issuelink, "inwardIssue")
                 and str(issuelink.inwardIssue).startswith("SP-")
+                and is_in_this_pi(str(issuelink.inwardIssue))
             ):
                 break
 
             if issuelink.type.name == "Relates":
-                if hasattr(issuelink, "inwardIssue") and str(
-                    issuelink.inwardIssue
-                ).startswith("SPO-"):
+                if (
+                    hasattr(issuelink, "inwardIssue")
+                    and str(issuelink.inwardIssue).startswith("SPO-")
+                    and is_in_this_pi(str(issuelink.inwardIssue))
+                ):
                     break
-                if hasattr(issuelink, "outwardIssue") and str(
-                    issuelink.outwardIssue
-                ).startswith("SPO-"):
+                if (
+                    hasattr(issuelink, "outwardIssue")
+                    and str(issuelink.outwardIssue).startswith("SPO-")
+                    and is_in_this_pi(str(issuelink.outwardIssue))
+                ):
                     break
         else:
             assignee = (
@@ -80,16 +93,21 @@ def test_issues_are_child_of_a_feature_or_relate_to_an_objective(
 
     if len(unlinked_issues) > 1:
         pytest.fail(
-            f"{count} '{status}' issues aren't linked:\n"
+            f"{count} '{status}' issues aren't linked "
+            "to a feature or objective in the current PI:\n"
             f"{pprint.pformat(dict(unlinked_issues))}"
         )
     elif len(unlinked_issues) == 1:
         assignee, issues = unlinked_issues.popitem()
         if len(issues) == 1:
-            pytest.fail(f"{assignee}: {issues[0]} is '{status}' and is not linked.")
+            pytest.fail(
+                f"{assignee}: {issues[0]} is '{status}' and is not linked "
+                "to a feature or objective in the current PI."
+            )
         else:
             pytest.fail(
-                f"{assignee}: {len(issues)} issues are '{status}' and not linked:\n"
+                f"{assignee}: {len(issues)} issues are '{status}' and not linked "
+                "to a feature or objective in the current PI:\n"
                 f"{pprint.pformat(issues)}."
             )
 
