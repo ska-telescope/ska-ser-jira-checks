@@ -93,20 +93,6 @@ It's okay for "Done" issues to have an old fixVersion,
 but other issues should link to a current or future fixVersion
 (or not be linked to a fixVersion at all).
 
-**TODO**: This test needs work: an issue can has multiple fixVersions.
-If an issue fixVersion contains a current or future PI,
-it shouldn't matter if it also contains an older PI.
-
-### Test that every issue is child of a feature or relates to an objective
-
-Within team projects, issues should generally be
-either the "Child of" a feature, or "Relates to" an objective.
-
-There are exceptions; for example team backlog work, innovation,
-and SAFe overhead work.
-An issue can be labelled as an exception that should be ignored by this test,
-by adding one of the following labels: "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
-
 ### Test that no issues are child of an objective
 
 Sometimes issues are mis-linked to be "Child of" an objective.
@@ -114,6 +100,32 @@ Sometimes issues are mis-linked to be "Child of" an objective.
 ### Test that no issues relate to a feature
 
 Sometimes issues are mis-linked to "Relates to" a feature.
+
+### Test that every issue in the current PI is linked to a "parent" issue
+
+Within team projects, issues should generally link to a "parent" issue,
+through one of these means:
+* An epic link
+* A "Child of" link to a feature
+* A "Relates to" link to an objective.
+
+There are exceptions; for example team backlog work, innovation,
+and SAFe overhead work.
+An issue can be labelled as an exception that should be ignored by this test,
+by adding one of the following labels: "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
+
+### Test that issues in the current PI have a parent issue in the current PI
+
+An project issue in the current PI should have a parent issue in the current PI.
+It is okay for such an issue to *also* link to a parent in a previous PI,
+for example if it is work that was not completed last PI and has been carried over.
+
+### Test that issue status is consistent with parent issue status.
+
+The status of an issue should be consistent with the status of its parent issue(s).
+
+For example, it doesn't make sense for an "In Progress" issue
+to have a parent epic that is "Done".
 
 ### Test that no To Do or BACKLOG issues have commits
 

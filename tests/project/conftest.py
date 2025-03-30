@@ -96,6 +96,8 @@ def fixture_in_progress_issues_by_assignee(issues_by_status):
     """
     by_assignee = defaultdict(list)
     for issue in issues_by_status["In Progress"]:
+        if issue.fields.issuetype.name == "Epic":
+            continue
         if issue.fields.assignee:
             by_assignee[issue.fields.assignee.name].append(issue)
     return by_assignee
@@ -112,6 +114,8 @@ def fixture_blocked_issues_by_assignee(issues_by_status):
     """
     by_assignee = defaultdict(list)
     for issue in issues_by_status["BLOCKED"]:
+        if issue.fields.issuetype.name == "Epic":
+            continue
         if issue.fields.assignee:
             by_assignee[issue.fields.assignee.name].append(issue)
     return by_assignee
