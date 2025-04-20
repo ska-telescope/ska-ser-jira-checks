@@ -8,18 +8,18 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    ("status", "age"),
+    ("status", "age", "include_epics"),
     [
-        ("BACKLOG", 90),
-        ("To Do", 30),
-        ("In Progress", 30),
-        ("Reviewing", 30),
-        ("Merge Request", 30),
-        ("BLOCKED", 30),
-        ("READY FOR ACCEPTANCE", 30),
+        ("BACKLOG", 90, True),
+        ("To Do", 30, False),
+        ("In Progress", 30, False),
+        ("Reviewing", 14, True),
+        ("Merge Request", 14, True),
+        ("BLOCKED", 14, True),
+        ("READY FOR ACCEPTANCE", 7, True),
     ],
 )
-def test_issues_not_too_old(issues_by_status, status, age):
+def test_issues_not_too_old(issues_by_status, status, age, include_epics):
     """
     Test that every issue has been updated reasonably recently.
 
@@ -40,6 +40,7 @@ def test_issues_not_too_old(issues_by_status, status, age):
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
     :param age: the maximum permitted number of days since an issue has been updated.
+    :param include_epics: whether to include issues of type Epic
     """
     deadline = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
         days=age
@@ -48,6 +49,8 @@ def test_issues_not_too_old(issues_by_status, status, age):
     old_issues = defaultdict(list)
     count = 0
     for issue in issues_by_status[status]:
+        if issue.fields.issuetype.name == "Epic" and not include_epics:
+            continue
         updated = datetime.datetime.strptime(
             issue.fields.updated, "%Y-%m-%dT%H:%M:%S.%f%z"
         )
