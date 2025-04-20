@@ -127,7 +127,7 @@ def test_issues_in_this_pi_are_linked(
     or "Relates to" an objective.
 
     Exceptions are made for tickets with one of the following labels:
-    "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
+    "TEAM_BACKLOG", "DEPENDENCY", "INNOVATION" or "OVERHEAD".
 
     :param pi: the current Program Increment number
     :param unlinked_labels: set of lower-case labels
@@ -182,7 +182,7 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
     or "Relates to" an objective.
 
     Exceptions are made for tickets with one of the following labels:
-    "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
+    "TEAM_BACKLOG", "DEPENDENCY", "INNOVATION" or "OVERHEAD".
 
     :param pi: the current Program Increment number
     :param session: an active Jira session.

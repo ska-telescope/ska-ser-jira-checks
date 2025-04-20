@@ -105,6 +105,7 @@ Sometimes issues are mis-linked to "Relates to" a feature.
 
 Within team projects, issues should generally link to a "parent" issue,
 through one of these means:
+
 * An epic link
 * A "Child of" link to a feature
 * A "Relates to" link to an objective.
@@ -112,7 +113,8 @@ through one of these means:
 There are exceptions; for example team backlog work, innovation,
 and SAFe overhead work.
 An issue can be labelled as an exception that should be ignored by this test,
-by adding one of the following labels: "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
+by adding one of the following labels:
+"DEPENDENCY", "TEAM_BACKLOG", "INNOVATION" or "OVERHEAD".
 
 ### Test that issues in the current PI have a parent issue in the current PI
 

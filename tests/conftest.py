@@ -15,7 +15,7 @@ def fixture_unlinked_labels() -> set:
     :return: a  set of lower-case string labels
         that indicate that an issue is deliberately not linked.
     """
-    return {"innovation", "overhead", "team_backlog"}
+    return {"innovation", "overhead", "team_backlog", "dependency"}
 
 
 @pytest.fixture(scope="session", name="pi")
