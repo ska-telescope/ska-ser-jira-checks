@@ -7,6 +7,8 @@ from collections import defaultdict
 
 import pytest
 
+from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
+
 
 @pytest.fixture(name="issue_parentage", scope="session")
 def fixture_issue_parentage(issues, project):
@@ -117,9 +119,7 @@ def test_no_issues_relate_to_a_feature(issues):
         "Done",
     ],
 )
-def test_issues_in_this_pi_are_linked(
-    pi, unlinked_labels, issue_parentage, issues_by_status, status
-):
+def test_issues_in_this_pi_are_linked(pi, issue_parentage, issues_by_status, status):
     """
     Test that every issue is appropriately linked.
 
@@ -130,9 +130,6 @@ def test_issues_in_this_pi_are_linked(
     "TEAM_BACKLOG", "DEPENDENCY", "INNOVATION" or "OVERHEAD".
 
     :param pi: the current Program Increment number
-    :param unlinked_labels: set of lower-case labels
-        that indicate that an issue is deliberately not linked
-        to a feature or objective, and therefore should be ignored by this test.
     :param issue_parentage: dictionary specifying the parents of each issue
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
@@ -145,7 +142,7 @@ def test_issues_in_this_pi_are_linked(
         if current_pi not in fix_versions:
             continue
         lower_labels = set(label.lower() for label in issue.fields.labels)
-        if lower_labels.intersection(unlinked_labels):
+        if lower_labels.intersection(UNLINKED_LABELS):
             continue
 
         if issue.key not in issue_parentage:
@@ -171,9 +168,9 @@ def test_issues_in_this_pi_are_linked(
         "READY FOR ACCEPTANCE",
         "Done",
     ],
-)  # pylint: disable-next=too-many-arguments, too-many-positional-arguments
+)
 def test_issues_in_this_pi_have_parent_in_this_pi(
-    pi, session, unlinked_labels, issue_parentage, issues_by_status, status
+    pi, session, issue_parentage, issues_by_status, status
 ):
     """
     Test that every issue is appropriately linked.
@@ -186,9 +183,6 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
 
     :param pi: the current Program Increment number
     :param session: an active Jira session.
-    :param unlinked_labels: set of lower-case labels
-        that indicate that an issue is deliberately not linked
-        to a feature or objective, and therefore should be ignored by this test.
     :param issue_parentage: dictionary specifying the parents of each issue
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
@@ -207,7 +201,7 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
         if current_pi not in fix_versions:
             continue
         lower_labels = set(label.lower() for label in issue.fields.labels)
-        if lower_labels.intersection(unlinked_labels):
+        if lower_labels.intersection(UNLINKED_LABELS):
             continue
         if issue.key not in issue_parentage:
             continue
