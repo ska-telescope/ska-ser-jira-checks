@@ -6,16 +6,7 @@ from datetime import date
 import jira
 import pytest
 
-
-@pytest.fixture(name="unlinked_labels", scope="session")
-def fixture_unlinked_labels() -> set:
-    """
-    Return a  set of labels that indicate that an issue is deliberately not linked.
-
-    :return: a  set of lower-case string labels
-        that indicate that an issue is deliberately not linked.
-    """
-    return {"innovation", "overhead", "team_backlog"}
+UNLINKED_LABELS = {"innovation", "overhead", "team_backlog", "dependency"}
 
 
 @pytest.fixture(scope="session", name="pi")

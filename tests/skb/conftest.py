@@ -2,6 +2,18 @@
 
 import pytest
 
+SKB_STATUSES = [
+    "Identified",
+    "Assessment",
+    "Assigned",
+    "In Progress",
+    "BLOCKED",
+    "Verifying",
+    "Validating",
+    "Done",
+    "Discarded",
+]
+
 
 @pytest.fixture(scope="session", name="skbs")
 def fixture_skbs(session, start_date):
@@ -51,37 +63,16 @@ def fixture_team_skbs(skbs, team):
     return team_skbs
 
 
-@pytest.fixture(scope="session", name="skb_statuses")
-def fixture_skb_statuses():
-    """
-    Return a list of valid SKB statuses.
-
-    :return: a list of valid SKB statuses.
-    """
-    return [
-        "Identified",
-        "Assessment",
-        "Assigned",
-        "In Progress",
-        "BLOCKED",
-        "Verifying",
-        "Validating",
-        "Done",
-        "Discarded",
-    ]
-
-
 @pytest.fixture(scope="session", name="skbs_by_status")
-def fixture_skbs_by_status(team_skbs, skb_statuses):
+def fixture_skbs_by_status(team_skbs):
     """
     Return a dictionary of team SKB issues, keyed by status.
 
     :param team_skbs: list of all team SKBs
-    :param skb_statuses: list of SKB statuses
 
     :return: a dictionary of team SKBs, keyed by status.
     """
-    by_status = {status: [] for status in skb_statuses}
+    by_status = {status: [] for status in SKB_STATUSES}
 
     for skb in team_skbs:
         by_status[skb.fields.status.name].append(skb)

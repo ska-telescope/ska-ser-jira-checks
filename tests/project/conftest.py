@@ -4,25 +4,17 @@ from collections import defaultdict
 
 import pytest
 
-
-@pytest.fixture(scope="session", name="statuses")
-def fixture_statuses():
-    """
-    Return a list of valid issue statuses.
-
-    :return: a list of valid issue statuses.
-    """
-    return [
-        "BACKLOG",
-        "BLOCKED",
-        "Discarded",
-        "Done",
-        "In Progress",
-        "READY FOR ACCEPTANCE",
-        "Reviewing",  # JANUS and THORN
-        "Merge Request",  # WOMBAT
-        "To Do",
-    ]
+STATUSES = [
+    "BACKLOG",
+    "BLOCKED",
+    "Discarded",
+    "Done",
+    "In Progress",
+    "READY FOR ACCEPTANCE",
+    "Reviewing",  # JANUS and THORN
+    "Merge Request",  # WOMBAT
+    "To Do",
+]
 
 
 @pytest.fixture(scope="session", name="issues")
@@ -54,17 +46,16 @@ def fixture_issues(session, project, start_date):
 
 
 @pytest.fixture(scope="session", name="issues_by_status")
-def fixture_issues_by_status(issues, statuses):
+def fixture_issues_by_status(issues):
     """
     Return a dictionary of issues, keyed by status.
 
     :param issues: list of all issues under consideration
-    :param statuses: list of issue statuses.
 
     :return: a dictionary of issues, keyed by status.
     """
     by_status = {}
-    for status in statuses:
+    for status in STATUSES:
         by_status[status] = []
 
     for issue in issues:
@@ -96,6 +87,8 @@ def fixture_in_progress_issues_by_assignee(issues_by_status):
     """
     by_assignee = defaultdict(list)
     for issue in issues_by_status["In Progress"]:
+        if issue.fields.issuetype.name == "Epic":
+            continue
         if issue.fields.assignee:
             by_assignee[issue.fields.assignee.name].append(issue)
     return by_assignee
@@ -112,6 +105,8 @@ def fixture_blocked_issues_by_assignee(issues_by_status):
     """
     by_assignee = defaultdict(list)
     for issue in issues_by_status["BLOCKED"]:
+        if issue.fields.issuetype.name == "Epic":
+            continue
         if issue.fields.assignee:
             by_assignee[issue.fields.assignee.name].append(issue)
     return by_assignee

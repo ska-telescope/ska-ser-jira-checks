@@ -7,6 +7,8 @@ from collections import defaultdict
 
 import pytest
 
+from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
+
 
 @pytest.mark.parametrize(
     ("status", "age"),
@@ -81,7 +83,7 @@ def test_skb_not_too_old(skbs_by_status, status, age):
     ],
 )
 def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
-    pi, session, skbs_by_status, status, unlinked_labels
+    pi, session, skbs_by_status, status
 ):
     """
     Test that SKBs are child of a feature or relate to an objective.
@@ -90,9 +92,6 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
     :param session: an active Jira session.
     :param skbs_by_status: dictionary of SKB issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param unlinked_labels: set of lower-case labels
-        that indicate that an issue is deliberately not linked
-        to a feature or objective, and therefore should be ignored by this test.
     """
 
     @functools.lru_cache
@@ -105,7 +104,7 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
     count = 0
     for issue in skbs_by_status[status]:
         lower_labels = set(label.lower() for label in issue.fields.labels)
-        if lower_labels.intersection(unlinked_labels):
+        if lower_labels.intersection(UNLINKED_LABELS):
             continue
 
         for issuelink in issue.fields.issuelinks:
