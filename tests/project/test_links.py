@@ -2,8 +2,8 @@
 
 import functools
 import json
-import pprint
 from collections import defaultdict
+from typing import Any
 
 import pytest
 
@@ -54,11 +54,12 @@ def fixture_issue_parentage(issues, project):
     return parentage
 
 
-def test_no_issues_are_child_of_an_objective(issues):
+def test_no_issues_are_child_of_an_objective(issues, fail_if_data):
     """
     Test that no issues link to an objective with relationship "Child of".
 
     :param issues: list of issues.
+    :param fail_if_data: utility function that constructs test failure output.
     """
     objective_children = []
     for issue in issues:
@@ -67,43 +68,61 @@ def test_no_issues_are_child_of_an_objective(issues):
                 if hasattr(issuelink, "inwardIssue"):
                     inward = str(issuelink.inwardIssue)
                     if inward.startswith("SPO-"):
-                        objective_children.append(inward)
+                        objective_children.append(
+                            {
+                                "Issue": issue.key,
+                                "Summary": issue.fields.summary,
+                                "Objective": inward,
+                            }
+                        )
 
-    if len(objective_children) > 1:
-        pytest.fail(
-            f"{len(objective_children)} issues are child of an objective:\n"
-            f"{objective_children}"
-        )
-    elif len(objective_children) == 1:
-        pytest.fail(f"{objective_children[0]} issues are child of an objective.")
+    fail_if_data(
+        objective_children,
+        "{Issue} ('{Summary}') is child of objective {Objective}.",
+        "{length} issues are child of an objective:",
+        sort_key="Issue",
+    )
 
 
-def test_no_issues_relate_to_a_feature(issues):
+def test_no_issues_relate_to_a_feature(issues, fail_if_data):
     """
     Test that no issues link to a feature with relationship "Relates to".
 
     :param issues: list of issues.
+    :param fail_if_data: utility function that constructs test failure output.
     """
     feature_relatives = []
     for issue in issues:
         for issuelink in issue.fields.issuelinks:
-            if issuelink.type.name == "Relates":
-                if hasattr(issuelink, "inwardIssue"):
-                    inward = str(issuelink.inwardIssue)
-                    if inward.startswith("SP-"):
-                        feature_relatives.append(issue.key)
-                elif hasattr(issuelink, "outwardIssue"):
-                    outward = str(issuelink.outwardIssue)
-                    if outward.startswith("SP-"):
-                        feature_relatives.append(issue.key)
+            if issuelink.type.name != "Relates":
+                continue
+            if hasattr(issuelink, "inwardIssue"):
+                inward = str(issuelink.inwardIssue)
+                if inward.startswith("SP-"):
+                    feature_relatives.append(
+                        {
+                            "Issue": issue.key,
+                            "Summary": issue.fields.summary,
+                            "Feature": inward,
+                        }
+                    )
+            elif hasattr(issuelink, "outwardIssue"):
+                outward = str(issuelink.outwardIssue)
+                if outward.startswith("SP-"):
+                    feature_relatives.append(
+                        {
+                            "Issue": issue.key,
+                            "Summary": issue.fields.summary,
+                            "Feature": outward,
+                        }
+                    )
 
-    if len(feature_relatives) > 1:
-        pytest.fail(
-            f"{len(feature_relatives)} issues relate to a feature:\n"
-            f"{feature_relatives}"
-        )
-    elif len(feature_relatives) == 1:
-        pytest.fail(f"{feature_relatives[0]} relates to a feature.")
+    fail_if_data(
+        feature_relatives,
+        "{Issue} ('{Summary}') relates to feature {Feature}.",
+        "{length} issues relate to a feature:",
+        sort_key="Issue",
+    )
 
 
 @pytest.mark.parametrize(
@@ -119,7 +138,13 @@ def test_no_issues_relate_to_a_feature(issues):
         "Done",
     ],
 )
-def test_issues_in_this_pi_are_linked(pi, issue_parentage, issues_by_status, status):
+def test_issues_in_this_pi_are_linked(
+    pi,
+    issue_parentage,
+    issues_by_status,
+    status,
+    fail_if_data,
+):
     """
     Test that every issue is appropriately linked.
 
@@ -133,6 +158,7 @@ def test_issues_in_this_pi_are_linked(pi, issue_parentage, issues_by_status, sta
     :param issue_parentage: dictionary specifying the parents of each issue
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
     current_pi = f"PI{pi}"
     unlinked_issues = []
@@ -146,15 +172,16 @@ def test_issues_in_this_pi_are_linked(pi, issue_parentage, issues_by_status, sta
             continue
 
         if issue.key not in issue_parentage:
-            unlinked_issues.append(issue.key)
+            unlinked_issues.append(
+                {"Issue": issue.key, "Summary": issue.fields.summary}
+            )
 
-    if len(unlinked_issues) > 1:
-        pytest.fail(
-            f"{len(unlinked_issues)} '{status}' issues aren't linked:\n"
-            f"{pprint.pformat(unlinked_issues)}"
-        )
-    elif len(unlinked_issues) == 1:
-        pytest.fail(f"{unlinked_issues[0]} ('{status}') is not linked.")
+    fail_if_data(
+        unlinked_issues,
+        f"{{Issue}} ('{{Summary}}') is {status} and is not linked.",
+        f"{{length}} {status} issues aren't linked:",
+        sort_key="Issue",
+    )
 
 
 @pytest.mark.parametrize(
@@ -168,9 +195,14 @@ def test_issues_in_this_pi_are_linked(pi, issue_parentage, issues_by_status, sta
         "READY FOR ACCEPTANCE",
         "Done",
     ],
-)
+)  # pylint: disable-next=too-many-arguments, too-many-positional-arguments
 def test_issues_in_this_pi_have_parent_in_this_pi(
-    pi, session, issue_parentage, issues_by_status, status
+    pi,
+    session,
+    issue_parentage,
+    issues_by_status,
+    status,
+    fail_if_data,
 ):
     """
     Test that every issue is appropriately linked.
@@ -186,6 +218,7 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
     :param issue_parentage: dictionary specifying the parents of each issue
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
 
     @functools.lru_cache
@@ -209,19 +242,19 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
             if is_in_this_pi(link_target):
                 break
         else:
-            mislinked_issues.append(issue.key)
+            mislinked_issues.append(
+                {"Issue": issue.key, "Summary": issue.fields.summary}
+            )
 
-    if len(mislinked_issues) > 1:
-        pytest.fail(
-            f"{len(mislinked_issues)} '{status}' issues aren't linked "
-            "to a parent in the current PI:\n"
-            f"{pprint.pformat(mislinked_issues)}"
-        )
-    elif len(mislinked_issues) == 1:
-        pytest.fail(
-            f"{mislinked_issues[0]} is '{status}' and is not linked "
-            "to a parent in the current PI."
-        )
+    fail_if_data(
+        mislinked_issues,
+        (
+            f"{{Issue}} ('{{Summary}}') is {status} "
+            "and is not linked to a parent in the current PI."
+        ),
+        f"{{length}} {status} issues aren't linked to a parent in the current PI:",
+        sort_key="Issue",
+    )
 
 
 @pytest.mark.parametrize(
@@ -253,9 +286,14 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
             ],
         ),
     ],
-)
+)  # pylint: disable-next=too-many-arguments, too-many-positional-arguments
 def test_status_is_consistent_with_parent_status(
-    session, issues_by_status, status, consistent_parent_statuses, issue_parentage
+    session,
+    issues_by_status,
+    status,
+    consistent_parent_statuses,
+    issue_parentage,
+    fail_if_data,
 ):
     """
     Test that issue status is consistent with the status of its parent issues.
@@ -270,6 +308,7 @@ def test_status_is_consistent_with_parent_status(
     :param consistent_parent_statuses: list of parent statuses consistent
         with the current issue status.
     :param issue_parentage: dictionary specifying the parents of each issue
+    :param fail_if_data: utility function that constructs test failure output.
     """
 
     @functools.lru_cache
@@ -277,26 +316,34 @@ def test_status_is_consistent_with_parent_status(
         issue = session.issue(issue_key)
         return issue.fields.status.name
 
-    inconsistent_issues = defaultdict(list)
+    inconsistent_issues: list[dict[str, Any]] = []
     for issue in issues_by_status[status]:
         if issue.key not in issue_parentage:
             continue
+
+        inconsistent_parents: list[str] = []
         for _, parent_key in issue_parentage[issue.key]:
             if issue_status(parent_key) not in consistent_parent_statuses:
-                inconsistent_issues[issue.key].append(parent_key)
+                inconsistent_parents.append(parent_key)
+        if inconsistent_parents:
+            inconsistent_issues.append(
+                {
+                    "Issue": issue.key,
+                    "Summary": issue.fields.summary,
+                    "Parents": ", ".join(inconsistent_parents),
+                }
+            )
 
-    if len(inconsistent_issues) > 1:
-        pytest.fail(
-            f"{len(inconsistent_issues)} issues have inconsistent parent status:"
-            f"{pprint.pformat(dict(inconsistent_issues))}"
-        )
-    elif len(inconsistent_issues) == 1:
-        inconsistent_issue, parents = inconsistent_issues.popitem()
-        pytest.fail(f"{inconsistent_issue} has an inconsistent parent/s {parents}.")
+    fail_if_data(
+        inconsistent_issues,
+        "{Issue} ('{Summary}') has inconsistent parent/s {Parents}.",
+        "{length} issues have inconsistent parent status:",
+        sort_key="Issue",
+    )
 
 
 @pytest.mark.parametrize("status", ["To Do", "BACKLOG"])
-def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status):
+def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status, fail_if_data):
     """
     Test that no 'To Do' or 'Backlog' issues have commits.
 
@@ -305,9 +352,9 @@ def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status):
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
-    issues_with_commits = defaultdict(list)
-    count = 0
+    issues_with_commits: list[dict[str, Any]] = []
 
     for issue in issues_by_status[status]:
         raw_dev_field = issue.fields.customfield_13300
@@ -317,21 +364,23 @@ def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status):
         dev_field = json.loads(json_bit)
 
         if dev_field["cachedValue"]["summary"]["repository"]["overall"]["count"]:
-            name = issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
-            issues_with_commits[name].append(issue.key)
-            count += 1
-
-    if len(issues_with_commits) > 1:
-        pytest.fail(
-            f"{count} '{status}' issues have commits:\n"
-            f"{pprint.pformat(dict(issues_with_commits))}"
-        )
-    elif len(issues_with_commits) == 1:
-        assignee, issues = issues_with_commits.popitem()
-        if len(issues) == 1:
-            pytest.fail(f"{assignee}: {issues[0]} is '{status}' but has commits.")
-        else:
-            pytest.fail(
-                f"{assignee} has {count} '{status}' issues with commits:\n"
-                f"{pprint.pformat(issues)}"
+            assignee = (
+                issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
             )
+            issues_with_commits.append(
+                {
+                    "Issue": issue.key,
+                    "Summary": issue.fields.summary,
+                    "Assignee": assignee,
+                }
+            )
+
+    fail_if_data(
+        issues_with_commits,
+        (
+            "{Issue} ('{Summary}'), assigned to {Assignee}, "
+            f"is {status} but has commits."
+        ),
+        f"{{length}} {status} issues have commits:",
+        sort_key="Issue",
+    )

@@ -2,8 +2,7 @@
 
 import datetime
 import functools
-import pprint
-from collections import defaultdict
+from typing import Any
 
 import pytest
 
@@ -11,7 +10,7 @@ from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
 
 
 @pytest.mark.parametrize(
-    ("status", "age"),
+    ("status", "age_limit"),
     [
         ("Identified", 7),
         ("Assessment", 7),
@@ -22,52 +21,53 @@ from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
         ("Validating", 2),
     ],
 )
-def test_skb_not_too_old(skbs_by_status, status, age):
+def test_skb_not_too_old(skbs_by_status, status, age_limit, fail_if_data):
     """
     Test that every SKB has been updated reasonably recently.
 
     :param skbs_by_status: dictionary of SKB issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param age: the maximum permitted number of days since an issue has been updated.
+    :param age_limit: the maximum permitted number of days
+        since an issue has been updated.
+    :param fail_if_data: utility function that constructs test failure output.
     """
-    deadline = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
-        days=age
-    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+    deadline = now - datetime.timedelta(days=age_limit)
 
-    old_issues = defaultdict(list)
-    count = 0
+    old_issues: list[dict[str, Any]] = []
     for issue in skbs_by_status[status]:
         updated = datetime.datetime.strptime(
             issue.fields.updated, "%Y-%m-%dT%H:%M:%S.%f%z"
         )
         if updated < deadline:
-            key = (
+            age = (now - updated).days
+            assignee = (
                 issue.fields.assignee.name
                 if issue.fields.assignee
                 else issue.fields.creator.name
             )
-            old_issues[key].append((issue.key, str(updated.date())))
-            count += 1
+            old_issues.append(
+                {
+                    "Issue": issue.key,
+                    "Summary": issue.fields.summary,
+                    "Assignee": assignee,
+                    "Age": age,
+                }
+            )
 
-    if len(old_issues) > 1:
-        pytest.fail(
-            f"{count} '{status}' SKBs have not been updated "
-            f"for more than {age} days:\n{pprint.pformat(dict(old_issues))}"
-        )
-    elif len(old_issues) == 1:
-        (name, issues) = old_issues.popitem()
-        if len(issues) == 1:
-            (issue, updated) = issues[0]
-            pytest.fail(
-                f"{name}: {issue} is '{status}' and has not been updated "
-                f"since {updated} (more than {age} days)."
-            )
-        else:
-            pytest.fail(
-                f"{name}: {len(issues)} are '{status}' and have not been updated "
-                f"for more than {age} days:\n"
-                f"{pprint.pformat(issues)}"
-            )
+    fail_if_data(
+        old_issues,
+        (
+            f"{{Issue}} ('{{Summary}}'), assigned to {{Assignee}}, "
+            f"is {status} and has not been updated for {{Age}} days)."
+        ),
+        (
+            f"{{length}} {status} SKBs have not been updated "
+            f"for more than {age_limit} days:"
+        ),
+        sort_key="Age",
+        reverse=True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -83,7 +83,7 @@ def test_skb_not_too_old(skbs_by_status, status, age):
     ],
 )
 def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
-    pi, session, skbs_by_status, status
+    pi, session, skbs_by_status, status, fail_if_data
 ):
     """
     Test that SKBs are child of a feature or relate to an objective.
@@ -92,6 +92,7 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
     :param session: an active Jira session.
     :param skbs_by_status: dictionary of SKB issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
 
     @functools.lru_cache
@@ -100,8 +101,7 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
         fix_versions = set(issue.name for issue in issue.fields.fixVersions)
         return f"PI{pi}" in fix_versions
 
-    unlinked_issues = defaultdict(list)
-    count = 0
+    unlinked_issues: list[dict[str, Any]] = []
     for issue in skbs_by_status[status]:
         lower_labels = set(label.lower() for label in issue.fields.labels)
         if lower_labels.intersection(UNLINKED_LABELS):
@@ -130,30 +130,28 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
                 ):
                     break
         else:
-            key = (
+            assignee = (
                 issue.fields.assignee.name
                 if issue.fields.assignee
                 else issue.fields.creator.name
             )
-            unlinked_issues[key].append(issue.key)
-            count += 1
+            unlinked_issues.append(
+                {
+                    "Issue": issue.key,
+                    "Summary": issue.fields.summary,
+                    "Assignee": assignee,
+                }
+            )
 
-    if len(unlinked_issues) > 1:
-        pytest.fail(
-            f"{count} '{status}' SKBs aren't linked to a feature or objective "
-            "in the current PI:\n"
-            f"{pprint.pformat(dict(unlinked_issues))}"
-        )
-    elif len(unlinked_issues) == 1:
-        (name, issues) = unlinked_issues.popitem()
-        if len(issues) == 1:
-            pytest.fail(
-                f"{name}: {issues[0]} is not linked to a feature or objective "
-                "in the current PI."
-            )
-        else:
-            pytest.fail(
-                f"{name}: {len(issues)} are not linked to a feature or objective "
-                "in the current PI:\n"
-                f"{pprint.pformat(issues)}"
-            )
+    fail_if_data(
+        unlinked_issues,
+        (
+            "{Issue} ('{Summary}'), assigned to {Assignee}, "
+            "is not linked to a feature or objective in the current PI."
+        ),
+        (
+            f"{{length}} {status} SKBs aren't linked "
+            "to a feature or objective in the current PI:"
+        ),
+        sort_key="Issue",
+    )

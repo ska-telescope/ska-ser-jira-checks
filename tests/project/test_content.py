@@ -1,7 +1,6 @@
 """Test issue content."""
 
-import pprint
-from collections import defaultdict
+from typing import Any
 
 import pytest
 
@@ -17,7 +16,7 @@ import pytest
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_issues_have_description(issues_by_status, status):
+def test_issues_have_description(issues_by_status, status, fail_if_data):
     """
     Test that all issues of certain statuses have descriptions.
 
@@ -27,29 +26,22 @@ def test_issues_have_description(issues_by_status, status):
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
-    no_description = defaultdict(list)
-    count = 0
+    no_description: list[dict[str, Any]] = []
 
     for issue in issues_by_status[status]:
         if not issue.fields.description:
-            no_description[issue.fields.creator.name].append(issue.key)
-            count += 1
-
-    if len(no_description) > 1:
-        pytest.fail(
-            f"{count} '{status}' issues are lacking a description:\n"
-            f"{pprint.pformat(dict(no_description))}"
-        )
-    elif len(no_description) == 1:
-        creator, issues = no_description.popitem()
-        if len(issues) > 1:
-            pytest.fail(
-                f"{creator} has {count} '{status}' issues without a description:\n"
-                f"{pprint.pformat(issues)}"
+            no_description.append(
+                {"Issue": issue.key, "Creator": issue.fields.creator.name}
             )
-        else:  # len(issues) == 1
-            pytest.fail(f"{creator}: {issues[0]} is '{status}' without a description.")
+
+    fail_if_data(
+        no_description,
+        f"{{Issue}} ({{Creator}})) is {status} without a description.",
+        f"{{length}} {status} issues are lacking a description:",
+        sort_key="Issue",
+    )
 
 
 @pytest.mark.parametrize(
@@ -63,7 +55,7 @@ def test_issues_have_description(issues_by_status, status):
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_issues_have_a_fix_version(issues_by_status, status):
+def test_issues_have_a_fix_version(issues_by_status, status, fail_if_data):
     """
     Test that all issues of certain status have a fixVersion.
 
@@ -75,17 +67,20 @@ def test_issues_have_a_fix_version(issues_by_status, status):
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
-    no_pi = [
-        issue.key for issue in issues_by_status[status] if not issue.fields.fixVersions
-    ]
+    no_pi = []
+    for issue in issues_by_status[status]:
+        if issue.fields.fixVersions:
+            continue
+        no_pi.append({"Issue": issue.key, "Summary": issue.fields.summary})
 
-    if len(no_pi) > 1:
-        pytest.fail(
-            f"{len(no_pi)} '{status}' issues do not have a fixVersions field:\n{no_pi}"
-        )
-    elif len(no_pi) == 1:
-        pytest.fail(f"{no_pi[0]} is '{status}' and does not have a fixVersions field.")
+    fail_if_data(
+        no_pi,
+        f"{{Issue}} ('{{Summary}}') is {status} and does not have a PI.",
+        f"{{length}} {status} issues do not have a PI:",
+        sort_key="Issue",
+    )
 
 
 @pytest.mark.parametrize(
@@ -99,7 +94,7 @@ def test_issues_have_a_fix_version(issues_by_status, status):
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
+def test_no_issues_with_old_fix_version(pi, issues_by_status, status, fail_if_data):
     """
     Test that no incomplete issues have an old fixVersion.
 
@@ -110,12 +105,12 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
     :param pi: the current Program Increment number
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
+    :param fail_if_data: utility function that constructs test failure output.
     """
     current_pi = f"PI{pi}"
     next_pi = f"PI{pi+1}"
 
-    issues_with_old_fixversion = defaultdict(list)
-    count = 0
+    issues_with_old_fixversion: list[dict[str, Any]] = []
 
     for issue in issues_by_status[status]:
         fix_versions = set(issue.name for issue in issue.fields.fixVersions)
@@ -128,20 +123,13 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
             continue
 
         assignee = issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
-        issues_with_old_fixversion[assignee].append(issue.key)
-        count += 1
-
-    if len(issues_with_old_fixversion) > 1:
-        pytest.fail(
-            f"{count} '{status}' issues have old fixVersions:\n"
-            f"{pprint.pformat(dict(issues_with_old_fixversion))}"
+        issues_with_old_fixversion.append(
+            {"Assignee": assignee, "Issue": issue.key, "Summary": issue.fields.summary}
         )
-    elif len(issues_with_old_fixversion) == 1:
-        assignee, issues = issues_with_old_fixversion.popitem()
-        if len(issues) > 1:
-            pytest.fail(
-                f"{assignee} has {count} '{status}' issues with old fixVersions:\n"
-                f"{pprint.pformat(issues)}"
-            )
-        else:  # len(issues) == 1
-            pytest.fail(f"{assignee} has {issues[0]} '{status}' with old fixVersion.")
+
+    fail_if_data(
+        issues_with_old_fixversion,
+        "{Issue} ('{Summary}'), assigned to {Assignee}, " f"is {status} with old PI.",
+        f"{{length}} {status} issues have old PI:",
+        sort_key="Issue",
+    )

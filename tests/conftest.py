@@ -2,9 +2,12 @@
 
 import os
 from datetime import date
+from operator import itemgetter
+from typing import Any
 
 import jira
 import pytest
+from tabulate import tabulate
 
 UNLINKED_LABELS = {"innovation", "overhead", "team_backlog", "dependency"}
 
@@ -92,3 +95,52 @@ def fixture_team(session, project):
             reason="You don't have permission to read membership of this project."
         )
         return None
+
+
+@pytest.fixture(scope="session", name="fail_if_data")
+def fixture_fail_if_data():
+    """
+    Return a utility function that prepares output for test failure.
+
+    :return: a utility function
+    """
+
+    def fail_if_data(
+        data: list[dict[str, Any]],
+        one_template: str,
+        many_template: str,
+        sort_key: str | None = None,
+        reverse: bool = False,
+    ) -> None:
+        """
+        Fail with a well-formatted message if the provided data is non-empty.
+
+        :param data: a list of dictionaries providing
+            information about failure cases.
+        :param one_template: a string template specifying
+            how to report the failure if there is only one failure case.
+            In this case, we want to present all the information we can
+            on a single line. The template will be templated against
+            the content of that one failure case.
+        :param many_template: a string template specifying
+            how to report the failure if there are multiple failure cases.
+            The only argument available for templating this is "length",
+            which is the number of failure cases.
+            This string will be printed,
+            followed by a table describing each failure case.
+        :param sort_key: the key to sort the table by;
+            if omitted, the table order will reflect the list provided.
+        :param reverse: whether the reverse the sort order; default to False
+        """
+        if len(data) == 1:
+            pytest.fail(one_template.format(**data[0]))
+        elif len(data) > 1:
+            if sort_key is not None:
+                data = sorted(data, key=itemgetter(sort_key), reverse=reverse)
+            pytest.fail(
+                many_template.format(length=len(data))
+                + "\n\n"
+                + tabulate(data, headers="keys", maxcolwidths=100)
+            )
+
+    return fail_if_data
