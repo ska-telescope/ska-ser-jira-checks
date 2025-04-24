@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
+from tests.conftest import UNLINKED_LABELS, fail_if_data
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,7 @@ from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
         ("Validating", 2),
     ],
 )
-def test_skb_not_too_old(skbs_by_status, status, age_limit, fail_if_data):
+def test_skb_not_too_old(skbs_by_status, status, age_limit):
     """
     Test that every SKB has been updated reasonably recently.
 
@@ -29,7 +29,6 @@ def test_skb_not_too_old(skbs_by_status, status, age_limit, fail_if_data):
     :param status: the issue status under consideration.
     :param age_limit: the maximum permitted number of days
         since an issue has been updated.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     now = datetime.datetime.now(datetime.timezone.utc)
     deadline = now - datetime.timedelta(days=age_limit)
@@ -83,7 +82,7 @@ def test_skb_not_too_old(skbs_by_status, status, age_limit, fail_if_data):
     ],
 )
 def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
-    pi, session, skbs_by_status, status, fail_if_data
+    pi, session, skbs_by_status, status
 ):
     """
     Test that SKBs are child of a feature or relate to an objective.
@@ -92,7 +91,6 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
     :param session: an active Jira session.
     :param skbs_by_status: dictionary of SKB issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
 
     @functools.lru_cache

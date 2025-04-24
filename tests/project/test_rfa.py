@@ -5,15 +5,16 @@ from typing import Any
 
 import pytest
 
+from tests.conftest import fail_if_data
 
-def test_rfa_issues_have_outcomes(rfa_issues, fail_if_data):
+
+def test_rfa_issues_have_outcomes(rfa_issues):
     """
     Test that all READY FOR ACCEPTANCE issues have outcomes.
 
     Writing outcomes should be a pre-requisite to moving a ticket to RFA.
 
     :param rfa_issues: list of RFA issues.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     no_outcomes_rfa: list[dict[str, Any]] = []
 
@@ -44,9 +45,7 @@ def test_rfa_issues_have_outcomes(rfa_issues, fail_if_data):
 
 
 @pytest.mark.parametrize("status", ["Reviewing", "Merge Request"])
-def test_reviewing_issues_have_open_merge_requests(
-    issues_by_status, status, fail_if_data
-):
+def test_reviewing_issues_have_open_merge_requests(issues_by_status, status):
     """
     Test that Reviewing or Merge Request issues have unmerged MRs.
 
@@ -54,7 +53,6 @@ def test_reviewing_issues_have_open_merge_requests(
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     issues_with_no_open_mrs: list[dict[str, Any]] = []
 
@@ -91,15 +89,12 @@ def test_reviewing_issues_have_open_merge_requests(
 
 
 @pytest.mark.parametrize("status", ["READY FOR ACCEPTANCE", "Done"])
-def test_no_rfa_or_done_issues_have_open_merge_requests(
-    issues_by_status, status, fail_if_data
-):
+def test_no_rfa_or_done_issues_have_open_merge_requests(issues_by_status, status):
     """
     Test that no READY FOR ACCEPTANCE or Done issues have unmerged MRs.
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     issues_with_open_mrs: list[dict[str, Any]] = []
 
@@ -136,7 +131,7 @@ def test_no_rfa_or_done_issues_have_open_merge_requests(
 
 
 @pytest.mark.parametrize("max_rfa", [9])
-def test_not_too_many_rfa_issues(rfa_issues, max_rfa, fail_if_data):
+def test_not_too_many_rfa_issues(rfa_issues, max_rfa):
     """
     Test that there are not too many READY FOR ACCEPTANCE issues.
 
@@ -144,7 +139,6 @@ def test_not_too_many_rfa_issues(rfa_issues, max_rfa, fail_if_data):
 
     :param rfa_issues: list of RFA issues
     :param max_rfa: the maximum permitted number of READY FOR ACCEPTANCE issues.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     if len(rfa_issues) <= max_rfa:
         return

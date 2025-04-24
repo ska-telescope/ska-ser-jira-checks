@@ -4,6 +4,8 @@ from typing import Any
 
 import pytest
 
+from tests.conftest import fail_if_data
+
 
 @pytest.mark.parametrize(
     "status",
@@ -16,7 +18,7 @@ import pytest
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_issues_have_description(issues_by_status, status, fail_if_data):
+def test_issues_have_description(issues_by_status, status):
     """
     Test that all issues of certain statuses have descriptions.
 
@@ -26,7 +28,6 @@ def test_issues_have_description(issues_by_status, status, fail_if_data):
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     no_description: list[dict[str, Any]] = []
 
@@ -55,7 +56,7 @@ def test_issues_have_description(issues_by_status, status, fail_if_data):
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_issues_have_a_fix_version(issues_by_status, status, fail_if_data):
+def test_issues_have_a_fix_version(issues_by_status, status):
     """
     Test that all issues of certain status have a fixVersion.
 
@@ -67,7 +68,6 @@ def test_issues_have_a_fix_version(issues_by_status, status, fail_if_data):
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     no_pi = []
     for issue in issues_by_status[status]:
@@ -94,7 +94,7 @@ def test_issues_have_a_fix_version(issues_by_status, status, fail_if_data):
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_no_issues_with_old_fix_version(pi, issues_by_status, status, fail_if_data):
+def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
     """
     Test that no incomplete issues have an old fixVersion.
 
@@ -105,7 +105,6 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status, fail_if_da
     :param pi: the current Program Increment number
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     current_pi = f"PI{pi}"
     next_pi = f"PI{pi+1}"

@@ -4,6 +4,8 @@ from typing import Any
 
 import pytest
 
+from tests.conftest import fail_if_data
+
 
 @pytest.mark.parametrize(
     "status",
@@ -16,13 +18,12 @@ import pytest
         "BLOCKED",
     ],
 )
-def test_tickets_have_assignee(issues_by_status, status, fail_if_data):
+def test_tickets_have_assignee(issues_by_status, status):
     """
     Test that all tickets of certain statuses are assigned to someone.
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     unassigned = []
     for issue in issues_by_status[status]:
@@ -39,14 +40,13 @@ def test_tickets_have_assignee(issues_by_status, status, fail_if_data):
 
 
 @pytest.mark.parametrize("max_wip", [4])
-def test_noone_has_too_much_wip(in_progress_issues_by_assignee, max_wip, fail_if_data):
+def test_noone_has_too_much_wip(in_progress_issues_by_assignee, max_wip):
     """
     Test that no-one has too many "In Progress" issues assigned to them.
 
     :param in_progress_issues_by_assignee: dictionary of "In Progress" issues,
         keyed by the assignee.
     :param max_wip: the maximum permitted number of In Progress issues.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     overwip = []
     for assignee, issues in in_progress_issues_by_assignee.items():
@@ -68,16 +68,13 @@ def test_noone_has_too_much_wip(in_progress_issues_by_assignee, max_wip, fail_if
 
 
 @pytest.mark.parametrize("max_blocked", [2])
-def test_noone_has_too_much_blocked(
-    blocked_issues_by_assignee, max_blocked, fail_if_data
-):
+def test_noone_has_too_much_blocked(blocked_issues_by_assignee, max_blocked):
     """
     Test that no-one has too many "Blocked" issues assigned to them.
 
     :param blocked_issues_by_assignee: dictionary of "BLOCKED" issues,
         keyed by the assignee
     :param max_blocked: the maximum permitted number of BLOCKED issues.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     blocked: list[dict[str, Any]] = []
 
@@ -111,14 +108,13 @@ def test_noone_has_too_much_blocked(
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_tickets_are_assigned_within_team(team, issues_by_status, status, fail_if_data):
+def test_tickets_are_assigned_within_team(team, issues_by_status, status):
     """
     Test that all tickets are assigned within the team.
 
     :param team: set of team members usernames
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     misassigned: list[dict[str, Any]] = []
 
@@ -140,16 +136,13 @@ def test_tickets_are_assigned_within_team(team, issues_by_status, status, fail_i
     )
 
 
-def test_everyone_has_a_ticket_in_progress(
-    in_progress_issues_by_assignee, team, fail_if_data
-):
+def test_everyone_has_a_ticket_in_progress(in_progress_issues_by_assignee, team):
     """
     Test that everyone in the team has a ticket "In Progress".
 
     :param in_progress_issues_by_assignee: dictionary of "In Progress" issues,
         keyed by the assignee.
     :param team: set of team members
-    :param fail_if_data: utility function that constructs test failure output.
     """
     unassigned_members = team - set(in_progress_issues_by_assignee)
     unassigned_members = [{"Member": member} for member in unassigned_members]

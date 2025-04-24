@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from tests.conftest import UNLINKED_LABELS  # pylint: disable=import-error
+from tests.conftest import UNLINKED_LABELS, fail_if_data
 
 
 @pytest.fixture(name="issue_parentage", scope="session")
@@ -54,12 +54,11 @@ def fixture_issue_parentage(issues, project):
     return parentage
 
 
-def test_no_issues_are_child_of_an_objective(issues, fail_if_data):
+def test_no_issues_are_child_of_an_objective(issues):
     """
     Test that no issues link to an objective with relationship "Child of".
 
     :param issues: list of issues.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     objective_children = []
     for issue in issues:
@@ -84,12 +83,11 @@ def test_no_issues_are_child_of_an_objective(issues, fail_if_data):
     )
 
 
-def test_no_issues_relate_to_a_feature(issues, fail_if_data):
+def test_no_issues_relate_to_a_feature(issues):
     """
     Test that no issues link to a feature with relationship "Relates to".
 
     :param issues: list of issues.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     feature_relatives = []
     for issue in issues:
@@ -138,13 +136,7 @@ def test_no_issues_relate_to_a_feature(issues, fail_if_data):
         "Done",
     ],
 )
-def test_issues_in_this_pi_are_linked(
-    pi,
-    issue_parentage,
-    issues_by_status,
-    status,
-    fail_if_data,
-):
+def test_issues_in_this_pi_are_linked(pi, issue_parentage, issues_by_status, status):
     """
     Test that every issue is appropriately linked.
 
@@ -158,7 +150,6 @@ def test_issues_in_this_pi_are_linked(
     :param issue_parentage: dictionary specifying the parents of each issue
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     current_pi = f"PI{pi}"
     unlinked_issues = []
@@ -197,12 +188,7 @@ def test_issues_in_this_pi_are_linked(
     ],
 )  # pylint: disable-next=too-many-arguments, too-many-positional-arguments
 def test_issues_in_this_pi_have_parent_in_this_pi(
-    pi,
-    session,
-    issue_parentage,
-    issues_by_status,
-    status,
-    fail_if_data,
+    pi, session, issue_parentage, issues_by_status, status
 ):
     """
     Test that every issue is appropriately linked.
@@ -218,7 +204,6 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
     :param issue_parentage: dictionary specifying the parents of each issue
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
 
     @functools.lru_cache
@@ -288,12 +273,7 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
     ],
 )  # pylint: disable-next=too-many-arguments, too-many-positional-arguments
 def test_status_is_consistent_with_parent_status(
-    session,
-    issues_by_status,
-    status,
-    consistent_parent_statuses,
-    issue_parentage,
-    fail_if_data,
+    session, issues_by_status, status, consistent_parent_statuses, issue_parentage
 ):
     """
     Test that issue status is consistent with the status of its parent issues.
@@ -308,7 +288,6 @@ def test_status_is_consistent_with_parent_status(
     :param consistent_parent_statuses: list of parent statuses consistent
         with the current issue status.
     :param issue_parentage: dictionary specifying the parents of each issue
-    :param fail_if_data: utility function that constructs test failure output.
     """
 
     @functools.lru_cache
@@ -343,7 +322,7 @@ def test_status_is_consistent_with_parent_status(
 
 
 @pytest.mark.parametrize("status", ["To Do", "BACKLOG"])
-def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status, fail_if_data):
+def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status):
     """
     Test that no 'To Do' or 'Backlog' issues have commits.
 
@@ -352,7 +331,6 @@ def test_no_todo_or_backlog_issue_with_commits(issues_by_status, status, fail_if
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
-    :param fail_if_data: utility function that constructs test failure output.
     """
     issues_with_commits: list[dict[str, Any]] = []
 

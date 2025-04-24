@@ -4,6 +4,8 @@ import datetime
 
 import pytest
 
+from tests.conftest import fail_if_data
+
 
 @pytest.mark.parametrize(
     ("status", "age_limit", "include_epics"),
@@ -17,9 +19,7 @@ import pytest
         ("READY FOR ACCEPTANCE", 7, True),
     ],
 )
-def test_issues_not_too_old(
-    issues_by_status, status, age_limit, include_epics, fail_if_data
-):
+def test_issues_not_too_old(issues_by_status, status, age_limit, include_epics):
     """
     Test that every issue has been updated reasonably recently.
 
@@ -42,7 +42,6 @@ def test_issues_not_too_old(
     :param age_limit: the maximum permitted number of days
          since an issue has been updated.
     :param include_epics: whether to include issues of type Epic
-    :param fail_if_data: utility function that constructs test failure output.
     """
     now = datetime.datetime.now(datetime.timezone.utc)
     deadline = now - datetime.timedelta(days=age_limit)
