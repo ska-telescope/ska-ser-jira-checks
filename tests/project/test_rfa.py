@@ -44,12 +44,14 @@ def test_rfa_issues_have_outcomes(rfa_issues):
     )
 
 
-@pytest.mark.parametrize("status", ["Reviewing", "Merge Request"])
-def test_reviewing_issues_have_open_merge_requests(issues_by_status, status):
+@pytest.mark.parametrize("status", ["In Progress", "Reviewing", "Merge Request"])
+def test_no_active_issues_have_only_closed_merge_requests(issues_by_status, status):
     """
-    Test that Reviewing or Merge Request issues have unmerged MRs.
+    Test that In Progress and Reviewing issues don't have only merged MRs.
 
-    If they don't, then they should be moved through to READY FOR ACCEPTANCE.
+    It's okay if they don't have any linked MRs at all.
+    What we're looking for is issues that do have linked MRs, but they're all closed.
+    Such issues most probably need to be moved through to READY FOR ACCEPTANCE.
 
     :param issues_by_status: dictionary of issues, keyed by their status.
     :param status: the issue status under consideration.
@@ -57,15 +59,19 @@ def test_reviewing_issues_have_open_merge_requests(issues_by_status, status):
     issues_with_no_open_mrs: list[dict[str, Any]] = []
 
     for issue in issues_by_status[status]:
+        if issue.fields.issuetype.name == "Epic":
+            continue
+
         raw_dev_field = issue.fields.customfield_13300
 
         index = raw_dev_field.find("devSummaryJson=")
         json_bit = raw_dev_field[index + len("devSummaryJson=") : -1]
         dev_field = json.loads(json_bit)
 
-        if not dev_field["cachedValue"]["summary"]["pullrequest"]["overall"]["details"][
-            "openCount"
-        ]:
+        counts = dev_field["cachedValue"]["summary"]["pullrequest"]["overall"][
+            "details"
+        ]
+        if counts["mergedCount"] and not counts["openCount"]:
             assignee = (
                 issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
             )
