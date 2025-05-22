@@ -151,5 +151,5 @@ def test_everyone_has_a_ticket_in_progress(in_progress_issues_by_assignee, team)
         unassigned_members,
         "{Member} doesn't have a ticket In Progress.",
         "{length} team members don't have a ticket In Progress:\n",
-        sort_key="Issue",
+        sort_key="Member",
     )
