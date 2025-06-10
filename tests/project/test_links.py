@@ -245,7 +245,7 @@ def test_issues_in_this_pi_have_parent_in_this_pi(
 @pytest.mark.parametrize(
     ("status", "consistent_parent_statuses"),
     [
-        ("BACKLOG", ["BACKLOG"]),
+        ("BACKLOG", ["BACKLOG", "Identified"]),
         ("To Do", ["To Do", "In Progress", "Implementing", "BLOCKED", "Identified"]),
         ("In Progress", ["In Progress", "Implementing", "BLOCKED"]),
         ("BLOCKED", ["In Progress", "Implementing", "BLOCKED"]),
@@ -315,8 +315,11 @@ def test_status_is_consistent_with_parent_status(
 
     fail_if_data(
         inconsistent_issues,
-        "{Issue} ('{Summary}') has inconsistent parent/s {Parents}.",
-        "{length} issues have inconsistent parent status:",
+        (
+            f"{{Issue}} ('{{Summary}}') is {status} "
+            "and has inconsistent parent/s {Parents}."
+        ),
+        f"{{length}} {status} issues have inconsistent parent status:",
         sort_key="Issue",
     )
 
