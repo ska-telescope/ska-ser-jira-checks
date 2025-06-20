@@ -9,6 +9,36 @@ import pytest
 from tests.conftest import UNLINKED_LABELS, fail_if_data
 
 
+@pytest.mark.parametrize("status", ["Identified", "Assessment", "Assigned"])
+def test_team_created_skbs_have_component(team_created_skbs_by_status, status):
+    """
+    Test that every team-created SKB has been allocated to a component.
+
+    :param team_created_skbs_by_status: dictionary of team-created SKB issues,
+        keyed by their status.
+    :param status: the issue status under consideration.
+    """
+    issues_with_no_component = [
+        {
+            "Issue": issue.key,
+            "Summary": issue.fields.summary,
+            "Creator": issue.fields.creator.name,
+        }
+        for issue in team_created_skbs_by_status[status]
+        if not issue.fields.components
+    ]
+
+    fail_if_data(
+        issues_with_no_component,
+        (
+            "{Issue} ('{Summary}'), created by {Creator}, "
+            f"is {status} and has no component."
+        ),
+        (f"{{length}} team-created SKBs are {status} with no component:"),
+        sort_key="Issue",
+    )
+
+
 @pytest.mark.parametrize(
     ("status", "age_limit"),
     [
@@ -21,11 +51,12 @@ from tests.conftest import UNLINKED_LABELS, fail_if_data
         ("Validating", 2),
     ],
 )
-def test_skb_not_too_old(skbs_by_status, status, age_limit):
+def test_skb_not_too_old(team_assigned_skbs_by_status, status, age_limit):
     """
-    Test that every SKB has been updated reasonably recently.
+    Test that every SKB assigned to the team has been updated reasonably recently.
 
-    :param skbs_by_status: dictionary of SKB issues, keyed by their status.
+    :param team_assigned_skbs_by_status: dictionary of team-assigned SKB issues,
+        keyed by their status.
     :param status: the issue status under consideration.
     :param age_limit: the maximum permitted number of days
         since an issue has been updated.
@@ -34,7 +65,7 @@ def test_skb_not_too_old(skbs_by_status, status, age_limit):
     deadline = now - datetime.timedelta(days=age_limit)
 
     old_issues: list[dict[str, Any]] = []
-    for issue in skbs_by_status[status]:
+    for issue in team_assigned_skbs_by_status[status]:
         updated = datetime.datetime.strptime(
             issue.fields.updated, "%Y-%m-%dT%H:%M:%S.%f%z"
         )
@@ -82,14 +113,15 @@ def test_skb_not_too_old(skbs_by_status, status, age_limit):
     ],
 )
 def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
-    pi, session, skbs_by_status, status
+    pi, session, team_assigned_skbs_by_status, status
 ):
     """
     Test that SKBs are child of a feature or relate to an objective.
 
     :param pi: the current Program Increment number
     :param session: an active Jira session.
-    :param skbs_by_status: dictionary of SKB issues, keyed by their status.
+    :param team_assigned_skbs_by_status: dictionary of team-assigned SKB issues,
+         keyed by their status.
     :param status: the issue status under consideration.
     """
 
@@ -100,7 +132,7 @@ def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
         return f"PI{pi}" in fix_versions
 
     unlinked_issues: list[dict[str, Any]] = []
-    for issue in skbs_by_status[status]:
+    for issue in team_assigned_skbs_by_status[status]:
         lower_labels = set(label.lower() for label in issue.fields.labels)
         if lower_labels.intersection(UNLINKED_LABELS):
             continue

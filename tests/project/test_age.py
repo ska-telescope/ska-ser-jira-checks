@@ -71,7 +71,7 @@ def test_issues_not_too_old(issues_by_status, status, age_limit, include_epics):
     fail_if_data(
         old_issues,
         (
-            "{Key} ('{Summary}'), assigned to {Assignee}, "
+            "{Key} ('{Summary}'), assigned to or created by {Assignee}, "
             f"has been {status} for {{Age}} days."
         ),
         f"{{length}} issues have been {status} for more than {age_limit} days.",

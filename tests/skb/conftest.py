@@ -42,39 +42,41 @@ def fixture_skbs(session, start_date):
     return issues
 
 
-@pytest.fixture(scope="session", name="team_skbs")
-def fixture_team_skbs(skbs, team):
+@pytest.fixture(scope="session", name="team_created_skbs_by_status")
+def fixture_team_created_skbs_by_status(skbs, team):
     """
-    Return a list of issues in the SKB project, assigned to or created by team members.
+    Return a dictionary of team-created SKB issues, keyed by status.
 
     :param skbs: list of SKBs
     :param team: set of team member usernames
 
-    :return: a list of issues in the SKB project,
-        assigned to or created by team members.
-    """
-    team_skbs = []
-    for skb in skbs:
-        if skb.fields.assignee:
-            if skb.fields.assignee.name in team:
-                team_skbs.append(skb)
-        elif skb.fields.creator.name in team:
-            team_skbs.append(skb)
-    return team_skbs
-
-
-@pytest.fixture(scope="session", name="skbs_by_status")
-def fixture_skbs_by_status(team_skbs):
-    """
-    Return a dictionary of team SKB issues, keyed by status.
-
-    :param team_skbs: list of all team SKBs
-
-    :return: a dictionary of team SKBs, keyed by status.
+    :return: a dictionary of team-created SKBs, keyed by status.
     """
     by_status = {status: [] for status in SKB_STATUSES}
 
-    for skb in team_skbs:
-        by_status[skb.fields.status.name].append(skb)
+    for skb in skbs:
+        if skb.fields.creator.name in team:
+            by_status[skb.fields.status.name].append(skb)
+
+    return by_status
+
+
+@pytest.fixture(scope="session", name="team_assigned_skbs_by_status")
+def fixture_team_assigned_skbs_by_status(skbs, team):
+    """
+    Return a dictionary of team-assigned SKB issues, keyed by status.
+
+    :param skbs: list of SKBs
+    :param team: set of team member usernames
+
+    :return: a dictionary of team-assigned SKBs, keyed by status.
+    """
+    by_status = {status: [] for status in SKB_STATUSES}
+
+    for skb in skbs:
+        if not skb.fields.assignee:
+            continue
+        if skb.fields.assignee.name in team:
+            by_status[skb.fields.status.name].append(skb)
 
     return by_status
