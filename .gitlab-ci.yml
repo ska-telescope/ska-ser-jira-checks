@@ -26,8 +26,17 @@ include:
   - project: "ska-telescope/templates-repository"
     file: "gitlab-ci/includes/finaliser.gitlab-ci.yml"
 
-
+python-lint:
+  before_script:
+    - poetry install --no-root;
+  script:
+    - poetry run make python-lint;
+  
 python-test:
   rules:
     - when: manual
       allow_failure: true
+  before_script:
+    - poetry install --no-root;
+  script:
+    - poetry run make python-test;
