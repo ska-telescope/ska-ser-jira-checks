@@ -47,7 +47,6 @@ def test_team_created_skbs_have_component(team_created_skbs_by_status, status):
         ("Assigned", 14),
         ("In Progress", 30),
         ("BLOCKED", 7),
-        ("Verifying", 2),
         ("Validating", 2),
     ],
 )
@@ -108,7 +107,6 @@ def test_skb_not_too_old(team_assigned_skbs_by_status, status, age_limit):
         "Assigned",
         "In Progress",
         "BLOCKED",
-        "Verifying",
         "Validating",
     ],
 )

@@ -8,7 +8,6 @@ SKB_STATUSES = [
     "Assigned",
     "In Progress",
     "BLOCKED",
-    "Verifying",
     "Validating",
     "Transferred",
     "Done",
