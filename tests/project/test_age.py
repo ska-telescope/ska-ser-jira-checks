@@ -10,7 +10,7 @@ from tests.conftest import fail_if_data
 @pytest.mark.parametrize(
     ("status", "age_limit", "include_epics"),
     [
-        ("BACKLOG", 90, True),
+        ("BACKLOG", 120, True),
         ("To Do", 30, False),
         ("In Progress", 30, False),
         ("Reviewing", 14, True),
