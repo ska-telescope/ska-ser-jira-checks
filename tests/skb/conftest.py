@@ -4,12 +4,12 @@ import pytest
 
 SKB_STATUSES = [
     "Identified",
-    "Assessment",
+    "In Assessment",
     "Assigned",
     "In Progress",
     "BLOCKED",
-    "Verifying",
     "Validating",
+    "Transferred",
     "Done",
     "Discarded",
 ]
