@@ -9,7 +9,7 @@ import pytest
 from tests.conftest import UNLINKED_LABELS, fail_if_data
 
 
-@pytest.mark.parametrize("status", ["Identified", "Assessment", "Assigned"])
+@pytest.mark.parametrize("status", ["Identified", "In Assessment", "Assigned"])
 def test_team_created_skbs_have_component(team_created_skbs_by_status, status):
     """
     Test that every team-created SKB has been allocated to a component.
@@ -43,7 +43,7 @@ def test_team_created_skbs_have_component(team_created_skbs_by_status, status):
     ("status", "age_limit"),
     [
         ("Identified", 7),
-        ("Assessment", 7),
+        ("In Assessment", 7),
         ("Assigned", 14),
         ("In Progress", 30),
         ("BLOCKED", 7),
@@ -104,7 +104,7 @@ def test_skb_not_too_old(team_assigned_skbs_by_status, status, age_limit):
     "status",
     [
         "Identified",
-        "Assessment",
+        "In Assessment",
         "Assigned",
         "In Progress",
         "BLOCKED",
