@@ -107,7 +107,7 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
     :param status: the issue status under consideration.
     """
     current_pi = f"PI{pi}"
-    next_pi = f"PI{pi+1}"
+    next_pi = f"PI{pi + 1}"
 
     issues_with_old_fixversion: list[dict[str, Any]] = []
 

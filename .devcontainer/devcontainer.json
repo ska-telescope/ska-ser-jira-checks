@@ -27,6 +27,6 @@
             ]
         }
     },
-    "postCreateCommand": "sudo poetry config virtualenvs.create false && sudo poetry install",
+    "postCreateCommand": "uv sync",
     "runArgs": ["--env-file",".devcontainer/secrets.env"]
 }
