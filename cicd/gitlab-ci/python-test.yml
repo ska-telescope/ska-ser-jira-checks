@@ -1,0 +1,18 @@
+python-test:
+  image: ghcr.io/astral-sh/uv:debian
+  stage: test
+  tags:
+    - ${SKA_DEFAULT_RUNNER}
+  script:
+    - make python-test;
+  coverage: '/TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    name: "$CI_PROJECT_NAME-$CI_JOB_ID"
+    paths:
+      - build/
+    reports:
+      junit: build/reports/unit-tests.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: build/reports/code-coverage.xml
+    when: always

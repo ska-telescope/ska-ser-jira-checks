@@ -1,0 +1,13 @@
+python-lint:
+  image: ghcr.io/astral-sh/uv:debian
+  stage: lint
+  tags:
+    - ${SKA_DEFAULT_RUNNER}
+  before_script:
+    - mkdir -p build/reports
+  script:
+    - make python-lint;
+  artifacts:
+    paths:
+      - build/
+    when: always

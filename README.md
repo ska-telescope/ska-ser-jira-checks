@@ -202,7 +202,7 @@ and all issues created before that date will be disregarded.
 
 1. Clone this repo.
 
-2. Use `poetry install` to install into the environment of your choice.
+2. Use `uv sync` to install into the environment of your choice.
 
 3. Set appropriate values for these three environment variables:
    `JIRA_USERNAME`, `JIRA_PASSWORD` and `JIRA_PROJECT`.
