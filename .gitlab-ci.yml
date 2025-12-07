@@ -6,21 +6,15 @@ stages:
   - test
   - scan
 
-# Include CI templates 
 include:
-  - project: "ska-telescope/templates-repository"
-    file: "gitlab-ci/includes/cicd-variables.yml"
-
-  - local: "cicd/gitlab-ci/python-lint.yml"
-  - local: "cicd/gitlab-ci/python-test.yml"
-
-  # # Docs pages
-  # - project: "ska-telescope/templates-repository"
-  #   file: "gitlab-ci/includes/docs.gitlab-ci.yml"
-
-  # .post step finalisers e.g.: badges
-  - project: "ska-telescope/templates-repository"
-    file: "gitlab-ci/includes/finaliser.gitlab-ci.yml"
+- project: ska-telescope/templates-repository
+  file: 
+  - gitlab-ci/includes/finaliser.gitlab-ci.yml
+- project: ska-telescope/ska-python-uv
+  file:
+  - gitlab-ci/python-lint.yml
+  - gitlab-ci/python-test.yml
+  # - gitlab-ci/docs-build.yml
 
 python-test:
   rules:

@@ -1,4 +1,4 @@
 include .make/base.mk
-include cicd/make/python-uv.mk
+include .make-uv/make/python-uv.mk
 
 PYTHON_LINT_TARGET = tests
