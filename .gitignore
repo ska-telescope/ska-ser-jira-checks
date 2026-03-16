@@ -1,3 +1,5 @@
-.coverage
-build
 __pycache__
+.coverage
+.env
+build
+reports/report.xml

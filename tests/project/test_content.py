@@ -99,7 +99,7 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
     Test that no incomplete issues have an old fixVersion.
 
     It's okay for "Done" issues to have an old fixVersion,
-    but other issues should link to a current or future fixVersion
+    but other issues should link to a current fixVersion
     (or not be linked to a fixVersion at all).
 
     :param pi: the current Program Increment number
@@ -107,7 +107,6 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
     :param status: the issue status under consideration.
     """
     current_pi = f"PI{pi}"
-    next_pi = f"PI{pi + 1}"
 
     issues_with_old_fixversion: list[dict[str, Any]] = []
 
@@ -117,8 +116,6 @@ def test_no_issues_with_old_fix_version(pi, issues_by_status, status):
             continue
 
         if current_pi in fix_versions:
-            continue
-        if next_pi in fix_versions:
             continue
 
         assignee = issue.fields.assignee.name if issue.fields.assignee else "UNASSIGNED"
