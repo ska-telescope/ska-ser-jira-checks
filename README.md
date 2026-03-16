@@ -206,25 +206,20 @@ and all issues created before that date will be disregarded.
 
 3. Set appropriate values for these three environment variables:
    `JIRA_USERNAME`, `JIRA_PASSWORD` and `JIRA_PROJECT`.
+   You can do this by creating a `.env` file in the root directory:
 
-4. Run `pytest`
+   ```text
+   JIRA_USERNAME=my.username
+   JIRA_PASSWORD=SekretPa$$w0rd
+   JIRA_PROJECT=MYPROJ
+   ```
+
+   The `Makefile` will automatically load and export these variables.
+
+4. Run `make python-test` or `pytest`.
 
 **Note**: If you want to add your own tests to the test suite,
 that are specific to your project and should not be checked in,
 add them to a `test_custom.py` file.
 This filename is already gitignored.
 
-### Shortcut for users of the vscode remote container extension
-
-This project has a devcontainer definition,
-that loads environment variables from `.devcontainer/secrets.env`,
-which is gitignored.
-Create your own file of that name, with content like
-
-```text
-JIRA_USERNAME=my.username
-JIRA_PASSWORD=SekretPa$$w0rd
-JIRA_PROJECT=MYPROJ
-```
-
-and those variables will be set whenever you launch your devcontainer.
