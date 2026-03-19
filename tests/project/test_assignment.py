@@ -1,10 +1,6 @@
-"""Test issue links."""
-
-from typing import Any
+"""Report-based tests for issue assignments."""
 
 import pytest
-
-from tests.conftest import fail_if_data
 
 
 @pytest.mark.parametrize(
@@ -18,82 +14,53 @@ from tests.conftest import fail_if_data
         "BLOCKED",
     ],
 )
-def test_tickets_have_assignee(issues_by_status, status):
+def test_tickets_have_assignee(report, status):
     """
     Test that all tickets of certain statuses are assigned to someone.
 
-    :param issues_by_status: dictionary of issues, keyed by their status.
-    :param status: the issue status under consideration.
+    :param report: The report to check.
+    :param status: The status to check.
     """
-    unassigned = []
-    for issue in issues_by_status[status]:
-        if issue.fields.assignee:
-            continue
-        unassigned.append({"Issue": issue.key, "Summary": issue.fields.summary})
-
-    fail_if_data(
-        unassigned,
-        f"{{Issue}} ('{{Summary}}') is '{status}' and unassigned.",
-        f"{{length}} '{status}' issues are unassigned:",
-        sort_key="Issue",
-    )
+    violations = report.violations.get(f"unassigned_{status}", [])
+    if violations:
+        msg = f"{len(violations)} '{status}' issues are unassigned:\n"
+        for v in violations:
+            msg += f"- {v.issue_key}: {v.summary}\n"
+        pytest.fail(msg)
 
 
-@pytest.mark.parametrize("max_wip", [4])
-def test_noone_has_too_much_wip(in_progress_issues_by_assignee, max_wip):
+def test_noone_has_too_much_wip(report):
     """
-    Test that no-one has too many "In Progress" issues assigned to them.
+    Test that no-one has too many 'In Progress' issues assigned to them.
 
-    :param in_progress_issues_by_assignee: dictionary of "In Progress" issues,
-        keyed by the assignee.
-    :param max_wip: the maximum permitted number of In Progress issues.
+    :param report: The report to check.
     """
-    overwip = []
-    for assignee, issues in in_progress_issues_by_assignee.items():
-        if len(issues) > max_wip:
-            overwip.append(
-                {
-                    "Assignee": assignee,
-                    "Issues": ", ".join([issue.key for issue in issues]),
-                    "Count": len(issues),
-                }
-            )
-
-    fail_if_data(
-        overwip,
-        "{Assignee} has {Count} tickets In Progress: {Issues}.",
-        f"{{length}} team members have more than {max_wip} tickets In Progress:",
-        sort_key="Assignee",
-    )
+    violations = report.violations.get("too_much_wip", [])
+    if violations:
+        msg = f"{len(violations)} team members have more than 4 tickets In Progress:\n"
+        for v in violations:
+            assignee = v.details["assignee"]
+            count = v.details["wip_count"]
+            issue_keys = [issue["key"] for issue in v.details["issues"]]
+            msg += f"- {assignee} has {count} tickets: {', '.join(issue_keys)}\n"
+        pytest.fail(msg)
 
 
-@pytest.mark.parametrize("max_blocked", [2])
-def test_noone_has_too_much_blocked(blocked_issues_by_assignee, max_blocked):
+def test_noone_has_too_much_blocked(report):
     """
-    Test that no-one has too many "Blocked" issues assigned to them.
+    Test that no-one has too many 'Blocked' issues assigned to them.
 
-    :param blocked_issues_by_assignee: dictionary of "BLOCKED" issues,
-        keyed by the assignee
-    :param max_blocked: the maximum permitted number of BLOCKED issues.
+    :param report: The report to check.
     """
-    blocked: list[dict[str, Any]] = []
-
-    for assignee, issues in blocked_issues_by_assignee.items():
-        if len(issues) > max_blocked:
-            blocked.append(
-                {
-                    "Assignee": assignee,
-                    "Issues": ", ".join([issue.key for issue in issues]),
-                    "Count": len(issues),
-                }
-            )
-
-    fail_if_data(
-        blocked,
-        "{Assignee} has {Count} tickets blocked: {Issues}.",
-        f"{{length}} team members have more than {max_blocked} tickets Blocked:",
-        sort_key="Assignee",
-    )
+    violations = report.violations.get("too_much_blocked", [])
+    if violations:
+        msg = f"{len(violations)} team members have more than 2 tickets Blocked:\n"
+        for v in violations:
+            assignee = v.details["assignee"]
+            count = v.details["blocked_count"]
+            issue_keys = [issue["key"] for issue in v.details["issues"]]
+            msg += f"- {assignee} has {count} tickets: {', '.join(issue_keys)}\n"
+        pytest.fail(msg)
 
 
 @pytest.mark.parametrize(
@@ -108,48 +75,30 @@ def test_noone_has_too_much_blocked(blocked_issues_by_assignee, max_blocked):
         "READY FOR ACCEPTANCE",
     ],
 )
-def test_tickets_are_assigned_within_team(team, issues_by_status, status):
+def test_tickets_are_assigned_within_team(report, status):
     """
     Test that all tickets are assigned within the team.
 
-    :param team: set of team members usernames
-    :param issues_by_status: dictionary of issues, keyed by their status.
-    :param status: the issue status under consideration.
+    :param report: The report to check.
+    :param status: The status to check.
     """
-    misassigned: list[dict[str, Any]] = []
-
-    for issue in issues_by_status[status]:
-        if issue.fields.assignee and issue.fields.assignee.name not in team:
-            misassigned.append(
-                {
-                    "Assignee": issue.fields.assignee.name,
-                    "Issue": issue.key,
-                    "Summary": issue.fields.summary,
-                }
-            )
-
-    fail_if_data(
-        misassigned,
-        f"{{Issue}} ('{{Summary}}') is {status} and assigned to {{Assignee}}.",
-        f"{{length}} {status} issues are not assigned within the team:",
-        sort_key="Issue",
-    )
+    violations = report.violations.get(f"misassigned_{status}", [])
+    if violations:
+        msg = f"{len(violations)} {status} issues are not assigned within the team:\n"
+        for v in violations:
+            msg += f"- {v.issue_key}: {v.summary} (Assignee: {v.details['assignee']})\n"
+        pytest.fail(msg)
 
 
-def test_everyone_has_a_ticket_in_progress(in_progress_issues_by_assignee, team):
+def test_everyone_has_a_ticket_in_progress(report):
     """
-    Test that everyone in the team has a ticket "In Progress".
+    Test that everyone in the team has a ticket 'In Progress'.
 
-    :param in_progress_issues_by_assignee: dictionary of "In Progress" issues,
-        keyed by the assignee.
-    :param team: set of team members
+    :param report: The report to check.
     """
-    unassigned_members = team - set(in_progress_issues_by_assignee)
-    unassigned_members = [{"Member": member} for member in unassigned_members]
-
-    fail_if_data(
-        unassigned_members,
-        "{Member} doesn't have a ticket In Progress.",
-        "{length} team members don't have a ticket In Progress:\n",
-        sort_key="Member",
-    )
+    violations = report.violations.get("no_wip_for_member", [])
+    if violations:
+        msg = f"{len(violations)} team members don't have a ticket In Progress:\n"
+        for v in violations:
+            msg += f"- {v.details['member']}\n"
+        pytest.fail(msg)
