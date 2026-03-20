@@ -1,102 +1,52 @@
-"""Pytest fixtures and test setup for SKB-specific tests."""
-
-import datetime
-import functools
-from typing import Any
+"""Report-based tests for SKB issues."""
 
 import pytest
 
-from tests.conftest import UNLINKED_LABELS, fail_if_data
-
 
 @pytest.mark.parametrize("status", ["Identified", "In Assessment", "Assigned"])
-def test_team_created_skbs_have_component(team_created_skbs_by_status, status):
+def test_team_created_skbs_have_component(skb_report, status):
     """
     Test that every team-created SKB has been allocated to a component.
 
-    :param team_created_skbs_by_status: dictionary of team-created SKB issues,
-        keyed by their status.
-    :param status: the issue status under consideration.
+    :param skb_report: The report to check.
+    :param status: The status to check.
     """
-    issues_with_no_component = [
-        {
-            "Issue": issue.key,
-            "Summary": issue.fields.summary,
-            "Creator": issue.fields.creator.name,
-        }
-        for issue in team_created_skbs_by_status[status]
-        if not issue.fields.components
-    ]
-
-    fail_if_data(
-        issues_with_no_component,
-        (
-            "{Issue} ('{Summary}'), created by {Creator}, "
-            f"is {status} and has no component."
-        ),
-        (f"{{length}} team-created SKBs are {status} with no component:"),
-        sort_key="Issue",
-    )
+    violations = skb_report.violations.get(f"skb_no_component_{status}", [])
+    if violations:
+        msg = f"{len(violations)} team-created SKBs are {status} with no component:\n"
+        for v in violations:
+            msg += f"- {v.issue_key}: {v.summary} (Creator: {v.details['creator']})\n"
+        pytest.fail(msg)
 
 
 @pytest.mark.parametrize(
-    ("status", "age_limit"),
+    "status",
     [
-        ("Identified", 7),
-        ("In Assessment", 7),
-        ("Assigned", 14),
-        ("In Progress", 30),
-        ("BLOCKED", 7),
-        ("Validating", 2),
+        "Identified",
+        "In Assessment",
+        "Assigned",
+        "In Progress",
+        "BLOCKED",
+        "Validating",
     ],
 )
-def test_skb_not_too_old(team_assigned_skbs_by_status, status, age_limit):
+def test_skb_not_too_old(skb_report, status):
     """
     Test that every SKB assigned to the team has been updated reasonably recently.
 
-    :param team_assigned_skbs_by_status: dictionary of team-assigned SKB issues,
-        keyed by their status.
-    :param status: the issue status under consideration.
-    :param age_limit: the maximum permitted number of days
-        since an issue has been updated.
+    :param skb_report: The report to check.
+    :param status: The status to check.
     """
-    now = datetime.datetime.now(datetime.timezone.utc)
-    deadline = now - datetime.timedelta(days=age_limit)
-
-    old_issues: list[dict[str, Any]] = []
-    for issue in team_assigned_skbs_by_status[status]:
-        updated = datetime.datetime.strptime(
-            issue.fields.updated, "%Y-%m-%dT%H:%M:%S.%f%z"
-        )
-        if updated < deadline:
-            age = (now - updated).days
-            assignee = (
-                issue.fields.assignee.name
-                if issue.fields.assignee
-                else issue.fields.creator.name
+    violations = skb_report.violations.get(f"skb_too_old_{status}", [])
+    if violations:
+        msg = f"{len(violations)} {status} SKBs have not been updated for too long:\n"
+        for v in violations:
+            msg += (
+                f"- {v.issue_key}: {v.summary} "
+                f"(Age: {v.details['age_days']} days, "
+                f"Assignee: {v.details['assignee']})\n"
             )
-            old_issues.append(
-                {
-                    "Issue": issue.key,
-                    "Summary": issue.fields.summary,
-                    "Assignee": assignee,
-                    "Age": age,
-                }
-            )
-
-    fail_if_data(
-        old_issues,
-        (
-            f"{{Issue}} ('{{Summary}}'), assigned to {{Assignee}}, "
-            f"is {status} and has not been updated for {{Age}} days)."
-        ),
-        (
-            f"{{length}} {status} SKBs have not been updated "
-            f"for more than {age_limit} days:"
-        ),
-        sort_key="Age",
-        reverse=True,
-    )
+        pytest.fail(msg)
 
 
 @pytest.mark.parametrize(
@@ -111,75 +61,20 @@ def test_skb_not_too_old(team_assigned_skbs_by_status, status, age_limit):
     ],
 )
 def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
-    pi, session, team_assigned_skbs_by_status, status
+    skb_report, status
 ):
     """
     Test that SKBs are child of a feature or relate to an objective.
 
-    :param pi: the current Program Increment number
-    :param session: an active Jira session.
-    :param team_assigned_skbs_by_status: dictionary of team-assigned SKB issues,
-         keyed by their status.
-    :param status: the issue status under consideration.
+    :param skb_report: The report to check.
+    :param status: The status to check.
     """
-
-    @functools.lru_cache
-    def is_in_this_pi(issue_key):
-        issue = session.issue(issue_key)
-        fix_versions = set(issue.name for issue in issue.fields.fixVersions)
-        return f"PI{pi}" in fix_versions
-
-    unlinked_issues: list[dict[str, Any]] = []
-    for issue in team_assigned_skbs_by_status[status]:
-        lower_labels = set(label.lower() for label in issue.fields.labels)
-        if lower_labels.intersection(UNLINKED_LABELS):
-            continue
-
-        for issuelink in issue.fields.issuelinks:
-            if (
-                issuelink.type.name == "Parent/Child"
-                and hasattr(issuelink, "inwardIssue")
-                and str(issuelink.inwardIssue).startswith("SP-")
-                and is_in_this_pi(str(issuelink.inwardIssue))
-            ):
-                break
-
-            if issuelink.type.name == "Relates":
-                if (
-                    hasattr(issuelink, "inwardIssue")
-                    and str(issuelink.inwardIssue).startswith("SPO-")
-                    and is_in_this_pi(str(issuelink.inwardIssue))
-                ):
-                    break
-                if (
-                    hasattr(issuelink, "outwardIssue")
-                    and str(issuelink.outwardIssue).startswith("SPO-")
-                    and is_in_this_pi(str(issuelink.outwardIssue))
-                ):
-                    break
-        else:
-            assignee = (
-                issue.fields.assignee.name
-                if issue.fields.assignee
-                else issue.fields.creator.name
-            )
-            unlinked_issues.append(
-                {
-                    "Issue": issue.key,
-                    "Summary": issue.fields.summary,
-                    "Assignee": assignee,
-                }
-            )
-
-    fail_if_data(
-        unlinked_issues,
-        (
-            "{Issue} ('{Summary}'), assigned to {Assignee}, "
-            "is not linked to a feature or objective in the current PI."
-        ),
-        (
-            f"{{length}} {status} SKBs aren't linked "
-            "to a feature or objective in the current PI:"
-        ),
-        sort_key="Issue",
-    )
+    violations = skb_report.violations.get(f"skb_not_linked_to_pi_{status}", [])
+    if violations:
+        msg = (
+            f"{len(violations)} {status} SKBs aren't linked "
+            "to a feature or objective in the current PI:\n"
+        )
+        for v in violations:
+            msg += f"- {v.issue_key}: {v.summary} (Assignee: {v.details['assignee']})\n"
+        pytest.fail(msg)

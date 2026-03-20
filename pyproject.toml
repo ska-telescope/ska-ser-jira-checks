@@ -2,12 +2,23 @@
 name = "ska-ser-jira-checks"
 version = "0.1.0"
 description = ""
-authors = ["Drew Devereux"]
+authors = [{name = "Drew Devereux"}]
 requires-python = ">=3.9,<4"
 dependencies = [
     "jira",
     "tabulate",
+    "PyYAML",
 ]
+
+[project.scripts]
+ska-ser-jira-checks = "ska_ser_jira_checks.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
 
 [dependency-groups]
 dev = [
