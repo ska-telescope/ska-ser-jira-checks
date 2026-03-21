@@ -127,6 +127,16 @@ def save_report_to_yaml(report: Report, file_path: str) -> None:
         },
     }
 
+    unused_overrides = {}
+    for check_name, issue_keys in report.overrides.items():
+        used_for_check = report.used_overrides.get(check_name, [])
+        unused_for_check = [k for k in issue_keys if k not in used_for_check]
+        if unused_for_check:
+            unused_overrides[check_name] = unused_for_check
+
+    if unused_overrides:
+        report_dict["unused_overrides"] = unused_overrides
+
     with open(file_path, "w", encoding="utf-8") as f:
         yaml.dump(
             report_dict,
@@ -137,17 +147,39 @@ def save_report_to_yaml(report: Report, file_path: str) -> None:
         )
 
 
+def load_overrides(file_path: str = None) -> Dict[str, List[str]]:
+    """
+    Load violation overrides from a YAML file.
+
+    :param file_path: Path to the YAML file. If None, it will not load anything.
+
+    :return: A dictionary of overrides.
+    """
+    if not file_path:
+        return {}
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
 # pylint: disable=too-many-locals
-def run_checks(project: str, start_date: str = None) -> Dict[str, Report]:
+def run_checks(
+    project: str, start_date: str = None, overrides: Dict[str, Any] = None
+) -> Dict[str, Report]:
     """Run all Jira checks and produce two reports.
 
     :param project: The Jira project key.
     :param start_date: Optional start date for issues (YYYY-MM-DD).
+    :param overrides: Optional dictionary of violation overrides.
 
     :return: A dictionary of Report objects keyed by project name.
     """
     client = JiraClient()
     pi = get_current_pi()
+    overrides = overrides or {}
+
+    project_overrides = overrides.get(project, {})
+    skb_overrides = overrides.get("SKB", {})
 
     # Fetch project issues
     jql = f"project = {project}"
@@ -167,7 +199,7 @@ def run_checks(project: str, start_date: str = None) -> Dict[str, Report]:
     parentage = get_issue_parentage(all_issues, project)
 
     # Project checks
-    project_report = Report(project=project, pi=pi)
+    project_report = Report(project=project, pi=pi, overrides=project_overrides)
     project_context = ProjectCheckContext(
         issues_by_status=issues_by_status,
         pi=pi,
@@ -183,7 +215,7 @@ def run_checks(project: str, start_date: str = None) -> Dict[str, Report]:
             checker.check(project_report, project_context, **params)
 
     # SKB Checks
-    skb_report = Report(project="SKB", pi=pi)
+    skb_report = Report(project="SKB", pi=pi, overrides=skb_overrides)
     jql_skb = "project = SKB"
     if start_date:
         jql_skb += f" AND createdDate > {start_date}"
@@ -230,13 +262,23 @@ def main():
         default=".",
         help="Directory to save the reports (defaults to current directory).",
     )
+    parser.add_argument(
+        "--overrides",
+        default=os.environ.get("JIRA_OVERRIDES_FILE"),
+        help="Path to YAML file containing violation overrides.",
+    )
 
     args = parser.parse_args()
 
     if not args.project:
         parser.error("Project must be specified via --project or JIRA_PROJECT env var.")
 
-    reports = run_checks(args.project, args.start_date)
+    overrides = load_overrides(args.overrides)
+    if overrides:
+        num_overrides = sum(len(v) for v in overrides.values() if isinstance(v, dict))
+        print(f"Loaded {num_overrides} overrides from {args.overrides}.")
+
+    reports = run_checks(args.project, args.start_date, overrides)
 
     project_output = os.path.join(args.output_dir, f"{args.project}-report.yaml")
     save_report_to_yaml(reports[args.project], project_output)

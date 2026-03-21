@@ -35,4 +35,4 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = ["-ra", "-v", "--junitxml=reports/report.xml"]
+addopts = ["-ra", "-v"]

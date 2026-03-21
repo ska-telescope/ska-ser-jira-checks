@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from ska_ser_jira_checks.main import run_checks
+from ska_ser_jira_checks.main import load_overrides, run_checks
 
 
 @pytest.fixture(scope="session")
@@ -21,7 +21,9 @@ def all_reports():
 
     start_date = os.environ.get("JIRA_START_DATE")
 
-    return run_checks(project, start_date)
+    overrides_file = os.environ.get("JIRA_OVERRIDES_FILE")
+    overrides = load_overrides(overrides_file)
+    return run_checks(project, start_date, overrides=overrides)
 
 
 @pytest.fixture(scope="session")
