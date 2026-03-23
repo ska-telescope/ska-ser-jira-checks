@@ -68,10 +68,31 @@ The tool performs several categories of checks:
 
 The tool provides a CLI entrypoint:
 ```bash
-uv run ska-ser-jira-checks --project LOW --output-dir ./my-reports
+uv run ska-ser-jira-checks --project LOW --output-dir ./my-reports --overrides overrides.yaml
 ```
 
-## Architecture
+### Overrides
+
+You can ignore specific violations by providing an overrides file in YAML format.
+The file should be a dictionary where each root key is a project (e.g., `LOW` or `SKB`), containing its own dictionary of `check_name` keys and `issue_key` values:
+
+```yaml
+LOW:
+  todo_or_backlog_with_commits_BACKLOG:
+    - LOW-573
+SKB:
+  skb_not_assigned:
+    - SKB-123
+```
+
+When an override is set:
+- The violation will not appear in the report.
+- If the violation does not occur, the report will include it in an `unused_overrides` section, indicating that the override is no longer needed.
+
+Grouping by project key ensures that overrides for one report (like `LOW`) are not flagged as unused in the other (like `SKB`).
+
+Overrides can also be provided via the `JIRA_OVERRIDES_FILE` environment variable,
+in which case they also apply to the test suite.
 
 The tool is organized as a Python package `ska_ser_jira_checks`:
 - `main.py`: Entrypoint and report generation logic.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [LOW-2206] Support for overrides
 - [LOW-2198] Major refactor: Moved Jira housekeeping logic into a dedicated `ska_ser_jira_checks` package, with support for generating a YAML report.
 - [LOW-1109] Launch
 - [LOW-1149] Add SKB support

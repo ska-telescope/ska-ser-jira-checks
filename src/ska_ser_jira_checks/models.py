@@ -1,5 +1,6 @@
 """Data models for Jira checks."""
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
@@ -21,6 +22,10 @@ class Report:
     project: str
     pi: int
     violations: Dict[str, List[Violation]] = field(default_factory=dict)
+    overrides: Dict[str, List[str]] = field(default_factory=dict)
+    used_overrides: Dict[str, List[str]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
 
     def add_violation(
         self,
@@ -36,6 +41,11 @@ class Report:
         :param summary: A brief summary of the issue.
         :param details: Additional details about the violation.
         """
+        if issue_key in self.overrides.get(check_name, []):
+            if issue_key not in self.used_overrides[check_name]:
+                self.used_overrides[check_name].append(issue_key)
+            return
+
         if check_name not in self.violations:
             self.violations[check_name] = []
         self.violations[check_name].append(
