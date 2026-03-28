@@ -1189,6 +1189,7 @@ dependencies = [
     { name = "jira", version = "3.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "jira", version = "3.10.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "tabulate" },
 ]
 
@@ -1213,6 +1214,7 @@ dev = [
 requires-dist = [
     { name = "jira" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "tabulate" },
 ]
 
