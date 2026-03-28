@@ -22,3 +22,5 @@ SKB_STATUSES = [
     "BLOCKED",
     "Validating",
 ]
+
+SKB_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest", "Not Assigned"]
