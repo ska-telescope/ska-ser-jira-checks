@@ -35,7 +35,7 @@ The tool performs several categories of checks:
 
 ### SKB Checks
 - **Component Allocation**: Every SKB must be allocated to a component.
-- **Aggressive Deadlines**: SKBs have tighter update limits to encourage prompt action.
+- **Priority-based Age Limits**: SKBs have tighter update limits, which are further refined by priority (e.g., Critical/Highest SKBs must be updated more frequently than others).
 - **PI Linking**: SKBs must be linked to a feature or objective in the current PI.
 
 ## Using this tool
@@ -81,7 +81,7 @@ LOW:
   todo_or_backlog_with_commits_BACKLOG:
     - LOW-573
 SKB:
-  skb_not_assigned:
+  skb_too_old_In_Assessment_Highest:
     - SKB-123
 ```
 
