@@ -8,6 +8,7 @@ dependencies = [
     "jira",
     "tabulate",
     "PyYAML",
+    "requests",
 ]
 
 [project.scripts]

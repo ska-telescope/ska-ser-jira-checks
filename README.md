@@ -38,6 +38,9 @@ The tool performs several categories of checks:
 - **Priority-based Age Limits**: SKBs have tighter update limits, which are further refined by priority (e.g., Critical/Highest SKBs must be updated more frequently than others).
 - **PI Linking**: SKBs must be linked to a feature or objective in the current PI.
 
+### Miro Checks
+- **Board Sync**: Verifies that Jira issues in the current PI are present as cards on the configured Miro board.
+
 ## Using this tool
 
 1. **Clone the repo.**
@@ -53,6 +56,10 @@ The tool performs several categories of checks:
    JIRA_PASSWORD=your_password
 
    JIRA_PROJECT=LOW
+
+   # Miro (Optional)
+   MIRO_API_TOKEN=your_miro_token
+   MIRO_BOARD_ID=your_miro_board_id
    ```
 4. **Generate reports**:
    ```bash
