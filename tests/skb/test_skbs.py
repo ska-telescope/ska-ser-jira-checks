@@ -3,6 +3,9 @@
 import pytest
 
 
+from ska_ser_jira_checks.constants import SKB_PRIORITIES, SKB_STATUSES
+
+
 @pytest.mark.parametrize("status", ["Identified", "In Assessment", "Assigned"])
 def test_team_created_skbs_have_component(skb_report, status):
     """
@@ -19,27 +22,24 @@ def test_team_created_skbs_have_component(skb_report, status):
         pytest.fail(msg)
 
 
-@pytest.mark.parametrize(
-    "status",
-    [
-        "Identified",
-        "In Assessment",
-        "Assigned",
-        "In Progress",
-        "BLOCKED",
-        "Validating",
-    ],
-)
-def test_skb_not_too_old(skb_report, status):
+@pytest.mark.parametrize("status", SKB_STATUSES)
+@pytest.mark.parametrize("priority", SKB_PRIORITIES)
+def test_skb_not_too_old(skb_report, status, priority):
     """
     Test that every SKB assigned to the team has been updated reasonably recently.
 
     :param skb_report: The report to check.
     :param status: The status to check.
+    :param priority: The priority to check.
     """
-    violations = skb_report.violations.get(f"skb_too_old_{status}", [])
+    check_name = f"skb_too_old_{status}_{priority}"
+    violations = skb_report.violations.get(check_name, [])
+
     if violations:
-        msg = f"{len(violations)} {status} SKBs have not been updated for too long:\n"
+        msg = (
+            f"{len(violations)} {status} {priority} priority SKBs "
+            "have not been updated for too long:\n"
+        )
         for v in violations:
             msg += (
                 f"- {v.issue_key}: {v.summary} "
@@ -49,17 +49,7 @@ def test_skb_not_too_old(skb_report, status):
         pytest.fail(msg)
 
 
-@pytest.mark.parametrize(
-    "status",
-    [
-        "Identified",
-        "In Assessment",
-        "Assigned",
-        "In Progress",
-        "BLOCKED",
-        "Validating",
-    ],
-)
+@pytest.mark.parametrize("status", SKB_STATUSES)
 def test_that_skbs_are_child_of_a_feature_or_relate_to_an_objective_in_this_pi(
     skb_report, status
 ):

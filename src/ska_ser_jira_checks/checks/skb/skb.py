@@ -47,12 +47,42 @@ class SkbNotTooOldCheck(Check):
     """Check that every SKB has been updated reasonably recently."""
 
     parametrization = [
-        {"status": "Identified", "age_limit": 7},
-        {"status": "In Assessment", "age_limit": 7},
-        {"status": "Assigned", "age_limit": 14},
-        {"status": "In Progress", "age_limit": 30},
-        {"status": "BLOCKED", "age_limit": 7},
-        {"status": "Validating", "age_limit": 2},
+        {"status": "Identified", "priority": "Highest", "age_limit": 0},
+        {"status": "Identified", "priority": "High", "age_limit": 3},
+        {"status": "Identified", "priority": "Medium", "age_limit": 7},
+        {"status": "Identified", "priority": "Low", "age_limit": 7},
+        {"status": "Identified", "priority": "Lowest", "age_limit": 7},
+        {"status": "Identified", "priority": "Not Assigned", "age_limit": 7},
+        {"status": "In Assessment", "priority": "Highest", "age_limit": 0},
+        {"status": "In Assessment", "priority": "High", "age_limit": 3},
+        {"status": "In Assessment", "priority": "Medium", "age_limit": 7},
+        {"status": "In Assessment", "priority": "Low", "age_limit": 7},
+        {"status": "In Assessment", "priority": "Lowest", "age_limit": 7},
+        {"status": "In Assessment", "priority": "Not Assigned", "age_limit": 7},
+        {"status": "Assigned", "priority": "Highest", "age_limit": 0},
+        {"status": "Assigned", "priority": "High", "age_limit": 7},
+        {"status": "Assigned", "priority": "Medium", "age_limit": 14},
+        {"status": "Assigned", "priority": "Low", "age_limit": 14},
+        {"status": "Assigned", "priority": "Lowest", "age_limit": 14},
+        {"status": "Assigned", "priority": "Not Assigned", "age_limit": 14},
+        {"status": "In Progress", "priority": "Highest", "age_limit": 0},
+        {"status": "In Progress", "priority": "High", "age_limit": 7},
+        {"status": "In Progress", "priority": "Medium", "age_limit": 30},
+        {"status": "In Progress", "priority": "Low", "age_limit": 30},
+        {"status": "In Progress", "priority": "Lowest", "age_limit": 30},
+        {"status": "In Progress", "priority": "Not Assigned", "age_limit": 30},
+        {"status": "BLOCKED", "priority": "ighest", "age_limit": 0},
+        {"status": "BLOCKED", "priority": "High", "age_limit": 3},
+        {"status": "BLOCKED", "priority": "Medium", "age_limit": 14},
+        {"status": "BLOCKED", "priority": "Low", "age_limit": 14},
+        {"status": "BLOCKED", "priority": "Lowest", "age_limit": 14},
+        {"status": "BLOCKED", "priority": "Not Assigned", "age_limit": 14},
+        {"status": "Validating", "priority": "Highest", "age_limit": 0},
+        {"status": "Validating", "priority": "High", "age_limit": 0},
+        {"status": "Validating", "priority": "Medium", "age_limit": 7},
+        {"status": "Validating", "priority": "Low", "age_limit": 7},
+        {"status": "Validating", "priority": "Lowest", "age_limit": 7},
+        {"status": "Validating", "priority": "Not Assigned", "age_limit": 7},
     ]
 
     def check(
@@ -61,6 +91,7 @@ class SkbNotTooOldCheck(Check):
         context: SkbCheckContext,
         status: str,
         age_limit: int,
+        priority: str,
         **kwargs,
     ) -> None:
         """Check that every SKB has been updated reasonably recently.
@@ -69,6 +100,7 @@ class SkbNotTooOldCheck(Check):
         :param context: The context containing issue data.
         :param status: The status to check.
         :param age_limit: The maximum age in days.
+        :param priority: The priority to check.
         :param kwargs: Additional parameters for the check.
         """
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -77,16 +109,20 @@ class SkbNotTooOldCheck(Check):
         for issue in context.team_assigned_skbs:
             if issue.fields.status.name != status:
                 continue
+            if issue.fields.priority.name != priority:
+                continue
+
             updated = datetime.datetime.strptime(
                 issue.fields.updated, "%Y-%m-%dT%H:%M:%S.%f%z"
             )
             if updated < deadline:
                 report.add_violation(
-                    check_name=f"skb_too_old_{status}",
+                    check_name=f"skb_too_old_{status}_{priority}",
                     issue_key=issue.key,
                     summary=issue.fields.summary,
                     details={
                         "status": status,
+                        "priority": priority,
                         "age_days": (now - updated).days,
                         "assignee": get_assignee(issue),
                     },
