@@ -21,6 +21,9 @@ The tool performs several categories of checks:
 - **fixVersions**: Ensures issues are assigned to a Program Increment (PI).
 - **PI Currency**: Incomplete issues must be assigned to the current or a future PI.
 
+### Points Checks
+- **Story Points**: Ensures that all "Story", "Enabler", and "Spike" issues in the current PI have story points assigned (checked for "To Do", "In Progress", "Reviewing", "READY FOR ACCEPTANCE", "BLOCKED", and "Done" statuses).
+
 ### Link and Consistency Checks
 - **Link Integrity**: Prevents mis-linking issues as "Child of" an objective or "Relates to" a feature.
 - **Parentage**: Ensures issues in the current PI are linked to an appropriate parent (Epic, Feature, or Objective).

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- [LOW-2254] Add check that every story/enabler/spike in this PI has story points.
 - [LOW-2227] Support for Miro board checks.
 - [LOW-2228] Support for priority-based age limits for SKBs, with separate violations per priority.
 - [LOW-2206] Support for overrides
