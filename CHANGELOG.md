@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- [LOW-2595] Do not report issues of type sub-task as unlinked.
+- [LOW-2595] Add check that aggregate team WIP is not greater than 20.
 - [LOW-2254] Add check that every story/enabler/spike in this PI has story points.
 - [LOW-2227] Support for Miro board checks.
 - [LOW-2228] Support for priority-based age limits for SKBs, with separate violations per priority.

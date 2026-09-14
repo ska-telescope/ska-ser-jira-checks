@@ -201,3 +201,54 @@ class EveryoneHasATicketInProgressCheck(Check):
                 summary=f"Team member {member} has no tickets In Progress.",
                 details={"member": member},
             )
+
+
+class TeamDoesNotHaveTooMuchWipCheck(Check):
+    """Check that aggregate team WIP is not greater than 20."""
+
+    parametrization = [{"max_wip": 20}]
+
+    def check(
+        self, report: Report, context: ProjectCheckContext, max_wip: int = 20, **kwargs
+    ) -> None:
+        """Check that aggregate team WIP is not greater than allowed limit.
+
+        :param report: The report to add violations to.
+        :param context: The context containing issue data.
+        :param max_wip: The maximum aggregate team WIP allowed.
+        :param kwargs: Additional parameters for the check.
+        """
+        team = context.team
+        if not team:
+            return
+
+        max_wip = kwargs.get("max_team_wip", max_wip)
+        issues_by_status = context.issues_by_status
+        in_progress = issues_by_status.get("In Progress", [])
+        team_wip_issues = [
+            issue
+            for issue in in_progress
+            if issue.fields.issuetype.name != "Epic" and get_assignee(issue) in team
+        ]
+
+        if len(team_wip_issues) > max_wip:
+            report.add_violation(
+                check_name="too_much_team_wip",
+                issue_key="N/A",
+                summary=(
+                    f"Team has too much WIP: "
+                    f"{len(team_wip_issues)} issues (limit {max_wip})"
+                ),
+                details={
+                    "team_wip_count": len(team_wip_issues),
+                    "wip_count": len(team_wip_issues),
+                    "issues": [
+                        {
+                            "key": issue.key,
+                            "summary": issue.fields.summary,
+                            "assignee": get_assignee(issue),
+                        }
+                        for issue in team_wip_issues
+                    ],
+                },
+            )

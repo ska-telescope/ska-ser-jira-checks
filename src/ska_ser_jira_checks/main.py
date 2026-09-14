@@ -28,8 +28,9 @@ def get_current_pi() -> int:
 
     :return: The current PI number.
     """
+    lookahead = 5  # Flip over to PI32 on the Friday before rather than the Wednesday of
     delta = date.today() - date(2018, 9, 19)
-    return delta.days // 91
+    return (delta.days + lookahead) // 91
 
 
 def get_issue_parentage(

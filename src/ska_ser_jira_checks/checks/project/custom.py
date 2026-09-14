@@ -50,7 +50,7 @@ class IssuesInThisPiHaveAcceptableTypesCheck(Check):
         :param context: The context containing issue data.
         :param kwargs: Additional parameters for the check.
         """
-        acceptable_types = ["Story", "Enabler", "Spike", "Bug", "Epic"]
+        acceptable_types = ["Story", "Enabler", "Spike", "Bug", "Epic", "Sub-task"]
         current_pi = f"PI{context.pi}"
 
         for issues in context.issues_by_status.values():

@@ -106,6 +106,8 @@ class IssuesInThisPiAreLinkedCheck(Check):
         parentage = context.parentage
 
         for issue in issues_by_status.get(status, []):
+            if issue.fields.issuetype.name == "Sub-task":
+                continue
             fix_versions = get_fix_versions(issue)
             if current_pi not in fix_versions:
                 continue

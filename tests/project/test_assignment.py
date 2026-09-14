@@ -46,6 +46,25 @@ def test_noone_has_too_much_wip(report):
         pytest.fail(msg)
 
 
+def test_team_does_not_have_too_much_wip(report):
+    """
+    Test that aggregate team WIP is not greater than 20.
+
+    :param report: The report to check.
+    """
+    violations = report.violations.get("too_much_team_wip", [])
+    if violations:
+        violation = violations[0]
+        count = violation.details["team_wip_count"]
+        msg = f"Team has {count} tickets In Progress (limit 20):\n"
+        for issue in violation.details["issues"]:
+            msg += (
+                f"- {issue['key']}: {issue['summary']} "
+                f"(Assignee: {issue['assignee']})\n"
+            )
+        pytest.fail(msg)
+
+
 def test_noone_has_too_much_blocked(report):
     """
     Test that no-one has too many 'Blocked' issues assigned to them.
