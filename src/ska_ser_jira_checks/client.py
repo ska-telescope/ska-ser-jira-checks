@@ -78,9 +78,17 @@ class JiraClient:
 
         :return: the set of team member usernames.
         """
+        team_member_exclusions = os.environ.get(
+            "JIRA_PROJECT_MEMBER_EXCLUSIONS", ""
+        ).split(":")
+
         roles = self.session.project_roles(project=project)
         developer_id = roles["Developers"]["id"]
         team_members = self.session.project_role(
             project=project, id=developer_id
         ).actors
-        return {member.name for member in team_members}
+        return {
+            member.name
+            for member in team_members
+            if member.name not in team_member_exclusions
+        }
