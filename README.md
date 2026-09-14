@@ -27,7 +27,7 @@ The tool performs several categories of checks:
 
 ### Link and Consistency Checks
 - **Link Integrity**: Prevents mis-linking issues as "Child of" an objective or "Relates to" a feature.
-- **Parentage**: Ensures issues in the current PI are linked to an appropriate parent (Epic, Feature, or Objective).
+- **Parentage**: Ensures issues in the current PI are linked to an appropriate parent (Epic, Feature, or Objective). Sub-tasks are linked by definition and are not reported as unlinked.
 - **Status Consistency**: Verifies that an issue's status is consistent with its parent's status (e.g., an "In Progress" issue shouldn't have a "Done" parent).
 
 ### Workflow Checks (RFA & Commits)
