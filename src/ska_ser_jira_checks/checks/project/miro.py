@@ -2,7 +2,9 @@
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-locals, too-many-branches
+import html
 import os
+import re
 
 import requests
 
@@ -16,6 +18,37 @@ class MiroBoardCheck(Check):
         {"include_epics": True},
     ]
 
+    def _normalize_title(self, title: str) -> str:
+        """
+        Normalize a title for comparison.
+
+        - Strip HTML tags.
+        - Unescape HTML entities.
+        - Normalize quotes (convert smart quotes to standard).
+        - Normalize whitespace.
+
+        :param title: The title to normalize.
+
+        :return: The normalized title.
+        """
+        if not title:
+            return ""
+
+        # Strip HTML tags
+        title = re.sub(r"<[^>]*>", "", title)
+
+        # Unescape HTML entities
+        title = html.unescape(title)
+
+        # Normalize smart quotes to standard quotes
+        title = title.replace("“", '"').replace("”", '"')
+        title = title.replace("‘", "'").replace("’", "'")
+
+        # Normalize whitespace (consolidate internal whitespace, strip edges)
+        title = " ".join(title.split())
+
+        return title
+
     def check(
         self,
         report: Report,
@@ -24,7 +57,10 @@ class MiroBoardCheck(Check):
         **kwargs,
     ) -> None:
         """
-        Check that Jira tickets for the current PI are on the Miro board.
+        Check that Jira tickets are on the Miro board.
+
+        This checks that Jira tickets for the current PI or in the BACKLOG status
+        are on the Miro board.
 
         :param report: The report object to add violations to.
         :param context: The context containing issue data.
@@ -34,7 +70,8 @@ class MiroBoardCheck(Check):
         pi_str = f"PI{context.pi}"
 
         # Original code used PROJECT and PI in JQL, but here issues
-        # are already fetched. Filter for the current PI as a fixVersion.
+        # are already fetched. Filter for the current PI as a fixVersion,
+        # or issues of status "BACKLOG" (irrespective of PI).
         relevant_issues = []
         for status, status_issues in context.issues_by_status.items():
             if status == "Discarded":
@@ -44,7 +81,7 @@ class MiroBoardCheck(Check):
                     continue
 
                 fix_versions = {v.name for v in issue.fields.fixVersions}
-                if pi_str in fix_versions:
+                if (pi_str in fix_versions) or (status == "BACKLOG"):
                     relevant_issues.append(issue)
 
         if not relevant_issues:
@@ -74,7 +111,7 @@ class MiroBoardCheck(Check):
 
                 for item in data.get("data", []):
                     if "data" in item and "title" in item["data"]:
-                        miro_titles.add(item["data"]["title"])
+                        miro_titles.add(self._normalize_title(item["data"]["title"]))
 
                 url = data.get("links", {}).get("next")
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -88,7 +125,8 @@ class MiroBoardCheck(Check):
             return
 
         for issue in relevant_issues:
-            if issue.fields.summary not in miro_titles:
+            normalized_summary = self._normalize_title(issue.fields.summary)
+            if normalized_summary not in miro_titles:
                 report.add_violation(
                     check_name="missing_from_miro",
                     issue_key=issue.key,
