@@ -12,6 +12,7 @@ The tool performs several categories of checks:
 ### Assignment Checks
 - **Assignee Requirement**: Ensures that active issues ("In Progress", "Reviewing", etc.) have an assignee.
 - **WIP Limits**: Fails if an individual team member has more than 4 "In Progress" issues.
+- **Aggregate Team WIP Limit**: Fails if aggregate team WIP is greater than 20.
 - **Blocked Limits**: Fails if an individual team member has more than 2 "BLOCKED" issues.
 - **Team Membership**: Verifies that work is assigned to current project team members.
 - **Active Engagement**: Checks that every team member has at least one ticket "In Progress".
